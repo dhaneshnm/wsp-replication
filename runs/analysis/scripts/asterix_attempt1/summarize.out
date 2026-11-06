@@ -1,0 +1,45 @@
+first step of each ramp index: [0, 102, 204, 306, 408, 510, 612, 714, 816, 918]
+
+===== claude: N=200 mean score 31.49  mean len 833.9  median len 931  gold/step 0.0378
+columns ever occupied: [5]
+capped episodes: 0
+death causes: {'sticky': 140, 'trapped': 59, 'sampled_fatal': 1}
+  [trapped] n=59  ramp at death: {9: 38, 6: 3, 5: 2, 1: 2, 4: 3, 7: 3, 8: 5, 2: 1, 3: 2}
+    left/right would have survived this step: 59
+    earliest k (steps before death) from which vertical-only survival was possible: {1: 10, 3: 8, 4: 6, 2: 29, None: 2, 5: 4}
+    same with left/right allowed: {1: 59}
+    move_timer at death step (0 = entities move this step): {0: 59}
+  [sticky] n=140  ramp at death: {9: 66, 3: 5, 6: 6, 5: 14, 1: 4, 8: 14, 4: 6, 7: 17, 2: 3, 0: 5}
+    executed (repeated) action: {'d': 60, 'u': 56, 'n': 24}  sampled action: {'u': 13, 'n': 111, 'd': 16}
+  [sampled_fatal] n=1  ramp at death: {0: 1}
+    sampled action: {'u': 1}  p(sampled): [0.023]
+    sticky flag among these: 0
+    prob mass net put on fatal vertical actions: [0.023]
+ramp index at death (all): {0: 6, 1: 6, 2: 4, 3: 7, 4: 9, 5: 16, 6: 9, 7: 20, 8: 19, 9: 104}
+death step percentiles 10/25/50/75/90: [391.0, 643.0, 931.0, 1032.0, 1167.0]
+gold per 100 steps by ramp phase (ramp index; >=8 means move_speed 1): {0: 1.13, 1: 1.66, 2: 2.01, 3: 1.92, 4: 2.47, 5: 3.16, 6: 3.84, 7: 4.98, 8: 6.79, 9: 13.14}
+share of total gold from ramp>=8: 0.444
+vertical moves per 100 steps: 7.99
+fraction of steps per row 1..8: [0.037, 0.12, 0.146, 0.171, 0.194, 0.159, 0.13, 0.043]
+
+===== astra: N=200 mean score 57.74  mean len 904.0  median len 960  gold/step 0.0639
+columns ever occupied: [5]
+capped episodes: 0
+death causes: {'sampled_fatal': 102, 'trapped': 31, 'sticky': 67}
+  [trapped] n=31  ramp at death: {9: 29, 7: 1, 6: 1}
+    left/right would have survived this step: 31
+    earliest k (steps before death) from which vertical-only survival was possible: {2: 11, 3: 9, 1: 11}
+    same with left/right allowed: {1: 31}
+    move_timer at death step (0 = entities move this step): {0: 31}
+  [sticky] n=67  ramp at death: {6: 3, 5: 5, 9: 30, 3: 6, 7: 5, 1: 3, 0: 6, 4: 3, 8: 4, 2: 2}
+    executed (repeated) action: {'d': 19, 'u': 26, 'n': 22}  sampled action: {'n': 28, 'd': 22, 'u': 17}
+  [sampled_fatal] n=102  ramp at death: {9: 73, 3: 3, 7: 5, 8: 5, 5: 8, 6: 4, 0: 1, 4: 2, 2: 1}
+    sampled action: {'d': 57, 'u': 44, 'n': 1}  p(sampled): [0.632, 0.632, 0.633, 0.633, 0.657, 0.657, 0.657, 0.657, 0.657, 0.657, 0.657, 0.658, 0.658, 0.676, 0.683, 0.683, 0.683, 0.683, 0.683, 0.683, 0.683, 0.683, 0.683, 0.683, 0.683, 0.683, 0.683, 0.683, 0.683, 0.684, 0.684, 0.698, 0.699, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.723, 0.723, 0.723, 0.723, 0.723, 0.723, 0.723, 0.723, 0.724, 0.729, 0.768, 0.768, 0.78, 0.788, 0.806, 0.806, 0.831, 0.831, 0.846, 0.848, 0.86, 0.86, 0.882, 0.883, 0.894, 0.894, 0.894, 0.917, 0.917, 0.918, 0.922, 0.926, 0.926, 0.926, 0.945, 0.945, 0.945, 0.945, 0.945, 0.973, 0.973, 0.973, 0.978, 0.984, 0.984, 0.991, 0.997, 0.997, 0.997, 0.998, 0.998, 0.999, 0.999, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    sticky flag among these: 0
+    prob mass net put on fatal vertical actions: [0.632, 0.632, 0.633, 0.633, 0.657, 0.657, 0.657, 0.657, 0.657, 0.657, 0.657, 0.658, 0.658, 0.676, 0.683, 0.683, 0.683, 0.683, 0.683, 0.683, 0.683, 0.683, 0.683, 0.683, 0.683, 0.683, 0.683, 0.683, 0.683, 0.684, 0.684, 0.698, 0.699, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.723, 0.723, 0.723, 0.723, 0.723, 0.723, 0.723, 0.723, 0.724, 0.768, 0.768, 0.781, 0.788, 0.806, 0.806, 0.831, 0.831, 0.846, 0.848, 0.86, 0.86, 0.882, 0.883, 0.894, 0.894, 0.894, 0.917, 0.917, 0.918, 0.922, 0.926, 0.926, 0.926, 0.945, 0.945, 0.945, 0.945, 0.945, 0.973, 0.973, 0.973, 0.978, 0.984, 0.984, 0.991, 0.997, 0.997, 0.997, 0.998, 0.998, 0.999, 0.999, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+ramp index at death (all): {0: 7, 1: 3, 2: 3, 3: 9, 4: 5, 5: 13, 6: 8, 7: 11, 8: 9, 9: 132}
+death step percentiles 10/25/50/75/90: [392.0, 744.0, 960.0, 1102.0, 1241.0]
+gold per 100 steps by ramp phase (ramp index; >=8 means move_speed 1): {0: 2.24, 1: 2.93, 2: 3.84, 3: 3.4, 4: 4.83, 5: 5.45, 6: 6.63, 7: 7.79, 8: 11.18, 9: 15.25}
+share of total gold from ramp>=8: 0.444
+vertical moves per 100 steps: 30.77
+fraction of steps per row 1..8: [0.077, 0.148, 0.144, 0.156, 0.148, 0.135, 0.126, 0.067]

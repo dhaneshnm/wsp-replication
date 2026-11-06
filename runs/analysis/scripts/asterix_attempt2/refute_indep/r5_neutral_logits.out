@@ -1,0 +1,8 @@
+astra empty board row 2 logits n,u,d [61.9  59.84 60.9 ] n-u 2.07 n-d 1.01 P(n)=0.6705
+astra empty board row 4 logits n,u,d [61.9  61.05 60.9 ] n-u 0.85 n-d 1.01 P(n)=0.5583
+astra empty board row 5 logits n,u,d [61.9  61.05 60.9 ] n-u 0.85 n-d 1.01 P(n)=0.5583
+astra empty board row 7 logits n,u,d [61.9  61.05 59.68] n-u 0.85 n-d 2.22 P(n)=0.6518
+claude empty board row 2 logits n,u,d [46.41 43.59 44.96] n-u 2.83 n-d 1.45 P(n)=0.7728
+claude empty board row 4 logits n,u,d [46.41 44.86 44.96] n-u 1.55 n-d 1.45 P(n)=0.6912
+claude empty board row 5 logits n,u,d [46.41 44.86 44.96] n-u 1.55 n-d 1.45 P(n)=0.6912
+claude empty board row 7 logits n,u,d [46.41 44.86 43.69] n-u 1.55 n-d 2.73 P(n)=0.7824

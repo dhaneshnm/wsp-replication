@@ -1,0 +1,73 @@
+===== claude01 =====
+columns ever occupied (all steps, all episodes): [5]
+max p(left|right|fire) over all visited states: 2.296962421250592e-21  min: 2.109726091265326e-35
+states: 166772 | repeat of last executed action fatal: 1205 (0.0072) | states whose last action was up/down: 13568 | of those, repeat fatal: 897 (0.0661)
+treasure spawned 13973, captured 6298, rate 0.4507
+death causes: {'sticky(repeat fatal, sampled action safe)': 140, 'trapped(noop/up/down all fatal)': 59, 'sampled fatal, a safe noop/up/down existed': 1}
+  rows for sticky(repeat fatal, sampled action safe) {1: 4, 2: 22, 3: 30, 4: 27, 5: 26, 6: 18, 7: 11, 8: 2}
+  rows for trapped(noop/up/down all fatal) {1: 23, 3: 3, 4: 3, 5: 5, 7: 2, 8: 23}
+  rows for sampled fatal, a safe noop/up/down existed {8: 1}
+trapped deaths: 59; of these, left or right would survive this step: 59
+detail (cause, prev executed, sampled, executed): count
+    ('sticky(repeat fatal, sampled action safe)', 'down', 'noop', 'down') 57
+    ('trapped(noop/up/down all fatal)', 'noop', 'noop', 'noop') 56
+    ('sticky(repeat fatal, sampled action safe)', 'up', 'noop', 'up') 54
+    ('sticky(repeat fatal, sampled action safe)', 'noop', 'down', 'noop') 14
+    ('sticky(repeat fatal, sampled action safe)', 'noop', 'up', 'noop') 10
+    ('sticky(repeat fatal, sampled action safe)', 'down', 'up', 'down') 3
+    ('sticky(repeat fatal, sampled action safe)', 'up', 'down', 'up') 2
+    ('trapped(noop/up/down all fatal)', 'noop', 'up', 'up') 1
+    ('sampled fatal, a safe noop/up/down existed', 'noop', 'up', 'up') 1
+    ('trapped(noop/up/down all fatal)', 'noop', 'down', 'down') 1
+    ('trapped(noop/up/down all fatal)', 'down', 'up', 'up') 1
+===== astra01 =====
+columns ever occupied (all steps, all episodes): [5]
+max p(left|right|fire) over all visited states: 0.0  min: 0.0
+states: 180809 | repeat of last executed action fatal: 804 (0.0044) | states whose last action was up/down: 56812 | of those, repeat fatal: 562 (0.0099)
+treasure spawned 16974, captured 11548, rate 0.6803
+death causes: {'sampled fatal, a safe noop/up/down existed': 102, 'trapped(noop/up/down all fatal)': 31, 'sticky(repeat fatal, sampled action safe)': 67}
+  rows for sampled fatal, a safe noop/up/down existed {1: 57, 3: 1, 8: 44}
+  rows for trapped(noop/up/down all fatal) {1: 17, 4: 3, 7: 1, 8: 10}
+  rows for sticky(repeat fatal, sampled action safe) {1: 2, 2: 11, 3: 15, 4: 10, 5: 16, 6: 6, 7: 5, 8: 2}
+trapped deaths: 31; of these, left or right would survive this step: 31
+detail (cause, prev executed, sampled, executed): count
+    ('sampled fatal, a safe noop/up/down existed', 'up', 'down', 'down') 53
+    ('sampled fatal, a safe noop/up/down existed', 'down', 'up', 'up') 43
+    ('sticky(repeat fatal, sampled action safe)', 'up', 'noop', 'up') 15
+    ('sticky(repeat fatal, sampled action safe)', 'down', 'noop', 'down') 13
+    ('sticky(repeat fatal, sampled action safe)', 'up', 'down', 'up') 11
+    ('sticky(repeat fatal, sampled action safe)', 'noop', 'down', 'noop') 11
+    ('sticky(repeat fatal, sampled action safe)', 'noop', 'up', 'noop') 11
+    ('trapped(noop/up/down all fatal)', 'noop', 'up', 'up') 8
+    ('trapped(noop/up/down all fatal)', 'noop', 'down', 'down') 6
+    ('sticky(repeat fatal, sampled action safe)', 'down', 'up', 'down') 6
+    ('trapped(noop/up/down all fatal)', 'up', 'down', 'down') 5
+    ('trapped(noop/up/down all fatal)', 'noop', 'noop', 'noop') 4
+    ('sampled fatal, a safe noop/up/down existed', 'noop', 'down', 'down') 3
+    ('trapped(noop/up/down all fatal)', 'down', 'up', 'down') 2
+    ('trapped(noop/up/down all fatal)', 'up', 'noop', 'noop') 2
+    ('sampled fatal, a safe noop/up/down existed', 'noop', 'up', 'up') 1
+    ('trapped(noop/up/down all fatal)', 'up', 'down', 'up') 1
+    ('trapped(noop/up/down all fatal)', 'down', 'down', 'down') 1
+    ('sampled fatal, a safe noop/up/down existed', 'down', 'down', 'down') 1
+    ('trapped(noop/up/down all fatal)', 'noop', 'down', 'noop') 1
+    ('sampled fatal, a safe noop/up/down existed', 'up', 'noop', 'noop') 1
+    ('trapped(noop/up/down all fatal)', 'down', 'up', 'up') 1
+===== claude00 =====
+columns ever occupied (all steps, all episodes): [5]
+max p(left|right|fire) over all visited states: 2.297333400446212e-21  min: 2.1086028283529437e-35
+states: 235544 | repeat of last executed action fatal: 2499 (0.0106) | states whose last action was up/down: 23972 | of those, repeat fatal: 1843 (0.0769)
+treasure spawned 28961, captured 13126, rate 0.4532
+death causes: {'trapped(noop/up/down all fatal)': 199, 'sampled fatal, a safe noop/up/down existed': 1}
+  rows for trapped(noop/up/down all fatal) {1: 77, 2: 5, 3: 11, 4: 11, 5: 13, 6: 11, 7: 7, 8: 64}
+  rows for sampled fatal, a safe noop/up/down existed {8: 1}
+trapped deaths: 199; of these, left or right would survive this step: 199
+detail (cause, prev executed, sampled, executed): count
+    ('trapped(noop/up/down all fatal)', 'noop', 'noop', 'noop') 185
+    ('trapped(noop/up/down all fatal)', 'noop', 'up', 'up') 6
+    ('trapped(noop/up/down all fatal)', 'noop', 'down', 'down') 3
+    ('trapped(noop/up/down all fatal)', 'up', 'noop', 'noop') 2
+    ('trapped(noop/up/down all fatal)', 'up', 'down', 'down') 1
+    ('sampled fatal, a safe noop/up/down existed', 'noop', 'up', 'up') 1
+    ('trapped(noop/up/down all fatal)', 'down', 'up', 'up') 1
+    ('trapped(noop/up/down all fatal)', 'down', 'noop', 'noop') 1

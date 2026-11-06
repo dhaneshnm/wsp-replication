@@ -1,0 +1,1195 @@
+{
+  "summary": "Explain each Claude-written network, diagnose its score, verify claims, synthesize per game",
+  "agentCount": 10,
+  "logs": [],
+  "result": {
+    "perAttempt": [
+      {
+        "game": "seaquest",
+        "attempt": 1,
+        "score": 7.414,
+        "design_summary": "Claude's reply parks the submarine on columns 5–6 and makes fire the default action (fire logit 0, every other action −13 or lower when no layer-2 unit is on). Layer 1 is almost entirely \"row-gated\" units: each gets 15 per sub cell in its row against a bias of about −30, so only the unit for the sub's current row is off saturation. There are four groups: 9 vertical-urge units V0–V8, which weigh targets in other rows by distance (ch2 counts +, ch1 counts −½) and push away from danger in adjacent rows; 7 turn units T2–T8, whose pre-activation is ±0.4 for facing plus 0.4·(ch1+ch2 in cols 7–9 minus cols 0–3); 7 own-row hold/dodge units E2–E8, computed as tanh(6·ch2 − 4.5·ch1 + 3·adjacent danger); and singles R01, SURF (oxygen<60 AND ≥1 diver), XR and XL (column-sum centering). Layer 2 builds DOWN (6v − 6e − 1.8), UP (−6v − 6e − 1.8, +30 under SURF), TURN-R/TURN-L (on when the T pre-activation is beyond ±1.0) and two centering units gated off while holding. Each layer-2 unit adds about ±12 to its action's logit; centering adds ±8. The intended behaviour: track rows with divers or enemies, hold a row that has a target, turn to face it and fire, dodge bullets, rest at rows 4–5, never press up in rows 0–1 unless surfacing, and surface when oxygen is low with a diver aboard. Probes confirm almost every stated threshold. The failures come from the turn detector, which reads absolute columns and the shared trail channel, and from a surfacing climb that ignores danger.",
+        "units": [
+          {
+            "layer": "L1",
+            "units": "0-8 (V_k)",
+            "computes": "Row-gated vertical urge (+ = down): ch2 targets in other rows weighted 2/1.6/1.2/0.9/0.7/0.6 by distance, ch1 at −half (diver +w, enemy +w/2, bullet −w/2), adjacent-row danger in cols 3-8 repels (2.5), rows 0-1 never attract; bias gives resting depth rows 4-5; V0/V1 baseline +2 (dive) minus 1.9 per danger cell in the row below.",
+            "evidence": "probe_claude.py: row3 empty V=+0.38 -> down p=.95; row4 V=+0.10 / row5 V=-0.10 -> fire; row6 V=-0.38 -> up p=.98; diver row7 V=+0.86 -> down; fish row2 V=-0.60 -> up; fish row1 V=+0.10 -> fire (row 1 excluded); row0 empty V=+0.96 -> down p=1.0."
+          },
+          {
+            "layer": "L1",
+            "units": "9-15 (T_k, rows 2-8)",
+            "computes": "Turn signal pre-activation = ±0.4 facing (+ = facing left, from ch0 weights 15.4/15/14.6/14.2 and ch4 weights −0.8/0.8/1.6 at cols 4/6/7) + 0.4·(ch1+ch2 in cols 7-9 − cols 0-3). Enemy = 0.8, diver or bullet = 0.4.",
+            "evidence": "probe_claude.py: facing L + fish col9 Tpre=+1.20 -> right; facing R + fish col0 Tpre=−1.20 -> left; facing R + fish col9 Tpre=+0.40 -> fire."
+          },
+          {
+            "layer": "L1",
+            "units": "16-22 (E_k, rows 2-8)",
+            "computes": "Own-row status tanh(6·ch2 − 4.5·ch1 + 3·danger in adjacent rows cols 3-8): enemy +0.91, diver +1.0 (hold), bullet −1.0 (dodge), empty 0.",
+            "evidence": "probe_claude.py: own-row fish E=+0.91, diver E=+1.00, bullet E=−1.00 -> up/down 0.5/0.5; fish row5 col4 adjacent E=+1.00 -> fire (hold)."
+          },
+          {
+            "layer": "L1",
+            "units": "23 (R01), 24 (SURF), 25-26 (XR, XL)",
+            "computes": "R01 = tanh(0)=0 in rows 0-1, −1 elsewhere. SURF = tanh(6·in[593] − 6·in[557] − 3): on only when diver gauge col8 lit and oxygen col2 dark (oxygen<60, ≥1 diver). XR/XL = column-weighted ch0 sum: ±0.91 at cells 5-6, flip to +0.91 when the sub drifts to 6-7 or 4-5.",
+            "evidence": "probe_claude.py: R01=+0.00 at rows 0/1, −1.00 at rows 2-8; 'row4 oxy 50 ndiv 1' SURF=+1.00 -> up p=1.0; 'oxy 50 ndiv 0' SURF=−1.00 -> fire; cells 6-7 XR=+0.91 -> left p=.92; cells 4-5 XL=+0.91 -> right p=.92."
+          },
+          {
+            "layer": "L2",
+            "units": "0 DOWN, 1 UP",
+            "computes": "DOWN = 6v − 6e − 1.8 in rows 2-8 (6v − 1.8 in rows 0-1, −20 under SURF). UP = −6v − 6e − 1.8 in rows 2-8, at least +16 under SURF regardless of danger. In rows 0-1 UP = −6v − 13.8 (blocked), or −6v + 16.2 under SURF.",
+            "evidence": "Arithmetic from answer.md layer-2 block, checked by probes. Bullet in own row gives h2 DOWN=UP=+1.00. 'row4 oxy50 ndiv1, fish row3 col5 above' -> up p=1.0. 'row1 oxy 200 ndiv 1' -> down."
+          },
+          {
+            "layer": "L2",
+            "units": "2 TURN-R, 3 TURN-L",
+            "computes": "40·t − 30.46 (TURN-L also gets −100·R01 + bias): on when the T pre-activation is above +1.0 (or below −1.0). It does not check whether the sub already faces that way, so it can shift the sub.",
+            "evidence": "probe_claude.py: 2 fish at cols 8,9 while facing R gives Tpre=+1.20 -> right, a shift toward them. probe2.py: a lone foreign trail at col 7 while facing R gives Tpre=+1.20 -> right p=1.0."
+          },
+          {
+            "layer": "L2",
+            "units": "4-5 centering",
+            "computes": "4·XR − 4e − 2 (and the mirror with XL): steers back to cols 5-6 only while the own-row E unit is ≤ ~0, so it is suppressed while an enemy or diver is in the row.",
+            "evidence": "probe2.py: cells 8-9 facing R with a fish behind at col 7 gives CL=−0.92 (centering off), TURN_R=+1.00 -> right into the wall. replay.py seed 2, t=508-516: stuck at col 9 pressing right until the fish hit it."
+          },
+          {
+            "layer": "Output",
+            "units": "b3/W3",
+            "computes": "Biases [−15, 7, −2, 7, −2, 0]. Weights: DOWN→down +12, UP→up +12, TURN-R→right +12, TURN-L→left +12, centering ±8. Fire wins when everything is off.",
+            "evidence": "answer.md lines 293-299. verify_net.py: net.npz equals the edits applied to a zero net (228/228 statements, max diff 0.0)."
+          }
+        ],
+        "implementation_bugs": [
+          {
+            "description": "The facing reading in the T units uses ch4 (trail OR sub_back) at cols 4/6/7 with weights −0.8/+0.8/+1.6, so enemy and diver trails are read as the sub's back cell. A single foreign trail at col 7 (+1.6) by itself exceeds the +1.0 TURN threshold, so the sub presses right whatever its facing. The reply says facing 'is read from the back cell (ch4)'; the weights read any trail.",
+            "evidence": "probe2.py: 'facing R (cells5-6), lone foreign trail at col7' Tpre=+1.20 -> right p=1.0; 'diver col8 moving R (trail col7)' Tpre=+1.60 -> right. shifts.py over 200 episodes: 250 of 707 TURN- or sticky-driven shifts (rows ≥2) had a foreign trail in cols 4/6/7. The thinking flagged the risk ('its trail would push the turn units toward turning right, which could lead me straight into it') but did not fix it.",
+            "estimated_effect": "Accounts for a large share of the 3.74 unintended shifts per episode. It contributes to the 39 of 200 deaths where a left/right press shifted the sub into an enemy. No isolated counterfactual was run."
+          },
+          {
+            "description": "The T units and the facing window are fixed in absolute columns (sides = cols 0-3 vs 7-9, facing calibrated for cells 4-7). When the sub drifts off cols 5-6, facing is read with the wrong sign, and an enemy at col 7 behind a sub on cols 8-9 counts as 'right'. Centering is gated off while anything is in the row, so the sub cannot return. The reply says it 'never steers horizontally except to turn'.",
+            "evidence": "probe2.py: cells 7-8 facing L gives Tpre=−0.80 (reads as facing right); cells 8-9 facing R with a fish at col 7 behind gives TURN_R=+1.00, CL=−0.92 -> right. replay.py seed 2 t=508-516: the sub pressed right at col 9 for 9 steps until the fish hit it. colstats.py: 748 shifts in 200 episodes (3.74/ep); front column outside 5-6 in 9.5% of row≥2 steps. shifts.py: 261 of the 707 shifts began off-center. Three unclassified deaths (seeds 39, 78, 118) were enemies spawning onto a sub parked at col 9.",
+            "estimated_effect": "Part of the 83 deaths on left/right presses (41.5% of episodes). Not isolated by a counterfactual."
+          },
+          {
+            "description": "Divers count in the turn sum, because ch2 is weighted equally with ch1: a diver is 0.4, an enemy 0.8, and facing gives only ±0.4 against a ±1.0 threshold. So one diver on the side the sub faces cancels an enemy approaching from behind (0.4 + 0.8 − 0.4 = 0.8 < 1.0), and the sub keeps firing away from the enemy. This contradicts the reply's 'It turns to face the enemy and fires.' Col 4 is also in neither side window, so an enemy at col 4 behind a right-facing sub gives Tpre=−0.4 and no turn.",
+            "evidence": "probe2.py: 'facing L, fish col9 + diver col2' Tpre=+0.80 -> fire; 'facing R, fish col4 moving R' Tpre=−0.40 -> fire. missed_turns.py: of 919 steps with an approaching enemy behind a centred sub and no enemy ahead, the turn unit was off in 349; 342 of those (37.2% of all 919) had a diver on the facing side. late_turn.py: seeds 6, 21, 31 show 7+ steps facing a diver while a fish closes from behind, then a late turn onto it.",
+            "estimated_effect": "Unproven score cost. Zeroing ch2 in the T units and doubling ch1 (nodiverT) scored 7.06±0.49 vs 8.03±0.54 baseline on seeds 0-199, so this edit gave no measurable gain."
+          }
+        ],
+        "failure_modes": [
+          {
+            "description": "Surfacing climb into enemies: under SURF, UP gets +30 and DOWN −20, so the sub climbs whatever is directly above (an accepted risk in the thinking: 'an enemy directly above during the ascent could still kill the sub, which I'll accept').",
+            "evidence": "deaths.py: 66 deliberate (non-sticky) up presses during a surfacing request killed the sub; the killer started at col 5 (24) or col 6 (33); transitions 2->1: 24, 4->3: 14, 3->2: 13. Probe 'row4 oxy50 ndiv1, fish row3 col5' -> up p=1.0 (Astra's net fires/waits, p_fire=.86). Successful surfacings are 1.615 per episode out of 2.075 requests (≈78%). An oracle wrapper that replaces such climbs with fire raised the score 8.03 -> 10.93±0.62 and mean length 350 -> 470.",
+            "frequency": "66/200 episodes (33%); 94/200 deaths happen while a surfacing request is on"
+          },
+          {
+            "description": "Same-row collisions on a left/right press: either a late turn in place moves the front onto an enemy already at the back cell (44), or a shift moves the sub into an enemy (39). Causes are the trail pollution, off-center windows and diver cancellation described above, plus sticky repeats of turns.",
+            "evidence": "samerow.py: 30 turn-in-place deaths at cols 5-6 with the enemy behind, 14 turn-in-place off-center, 29 shifts off-center facing the killer, 10 shifts at cols 5-6. shifts.py: 178 of 707 shifts came from a sticky repeat of a turn.",
+            "frequency": "83/200 episodes (41.5%); another 15 die while stationary and firing"
+          },
+          {
+            "description": "Sticky-action vertical moves into an enemy, and a few deliberate tracking or dodge moves.",
+            "evidence": "deaths.py vertical breakdown: 16 sticky down, 6 sticky up, 1 sticky down under SURF; 4 deliberate downs and 1 deliberate up without SURF.",
+            "frequency": "28/200 episodes"
+          },
+          {
+            "description": "Oxygen and diver management works. No oxygen deaths, one empty surfacing, divers are collected steadily, but six-diver bonuses are small because surfacing triggers only below 60 oxygen.",
+            "evidence": "play_stats.py: cause 'oxygen' 0/200; surfaced_no_diver 1/200; 99.5% of episodes pick up ≥1 diver; 6.72 pickups/episode; 69 six-diver surfacings in 200 episodes; colstats.py: bonus 0.69/episode vs kills 7.34/episode.",
+            "frequency": "0-1/200 episodes lost to oxygen or the surfacing rule"
+          },
+          {
+            "description": "Unclassified by my tracker: enemies spawning on top of a sub parked at col 9 (seeds 39, 78, 118), and point-blank enemy-sub bullets spawned in the same step (seeds 76, 102, 143, 149).",
+            "evidence": "deaths.py 'unknown' list, with surrounding state printed in the inline check.",
+            "frequency": "7/200 episodes"
+          }
+        ],
+        "why_this_score": "The policy does most of what the reply says. Diving, resting depth, diver tracking, the row-1 guard and oxygen surfacing all check out in probes and in play (0 oxygen deaths, 6.7 pickups per episode). Episodes are short, though: the mean length is 350 steps on seeds 0-199 (327.6 on the official 1,000), about 2.85 deaths per 1,000 steps. The kill rate is 2.09 per 100 steps, so the score is about 7.3 kills plus a 0.7 surfacing bonus (8.03±0.54 on seeds 0-199; 7.41 on 1,000). Deaths spread across three mechanisms: (a) the danger-blind surfacing climb, 33% of episodes; (b) the leaky turn detector producing late turns and shifts into enemies, 41.5%; (c) sticky vertical moves, about 14%. Removing one barely moves the score. An oracle safe-surface wrapper gives 10.9, and a diver-free turn sum gives 7.1, which is not significant. Turning is load-bearing: forcing left and right off (b3[1]=b3[3]=−100) drops the score to 2.36, because the hold logic then parks the sub in rows with enemies arriving from behind. The score sits above the zero floor (0.1) and PPO 100M (5.6) because the vertical, diver and oxygen logic is sound, and far below Astra because the sub survives only about 350 steps.",
+        "vs_astra": "Astra's net, probed the same way, never presses left or right (b3 left/right = −100; 0 left/right executions in 200 episodes) and always faces left at col 5. Its layer 1 has: 9 row indicators; 7 diver-row detectors (8·ch2 − 8·ch1, so enemies cancel); 8 hazard detectors near the sub's column (ch1 weight 7 at cols 4-6, enemies partly cancelled by ch2, so bullets weigh more); 1 surface request; and 7 left-side shooting-opportunity detectors. Layer 2 has 24 'candidate row' units (stay/up/down per row), each scoring diver and shooting attraction minus a hazard penalty, read out with gain 30 as an argmax. Probes: an own-row fish at col 4, 6 or 7, or a bullet, gives a 50/50 up/down dodge; a fish at col 1 gives fire; a shootable fish two rows down draws the sub down (p=.85); a fish directly above during surfacing makes it wait (fire .86). In play (seeds 0-199): 53.71±2.99, 1,432 steps per episode, 0.70 deaths per 1,000 steps, 3.33 kills per 100 steps, 9 surfacings and 30 pickups per episode, and 6.0 points of six-diver bonus. Astra's surfacing requests succeed about 96.5% of the time (Claude's about 78%), and its surfacing deaths are almost all sticky repeats (68 of 72). Only 23 of 180 collisions happen in its own row (Claude: 98 of 192); 157 are vertical moves, 119 of them sticky. The two designs collect divers at about the same rate (2.1 vs 1.9 per 100 steps). The gap is mostly survival: about 4.1× longer episodes, then 1.6× kill rate, then the bonus that only long episodes reach. Astra handles approaching enemies with a one-step vertical dodge and never relies on horizontal logic. Claude's design holds rows and turns to fight, so it depends on a turn detector that the linear readout of trails, divers and absolute columns makes unreliable, and its surfacing climb has no hazard term. That difference accounts for the 7.4 vs 53.1 gap.",
+        "key_claims": [
+          {
+            "claim": "The scored net.npz is exactly the reply's edits applied to a zero net.",
+            "evidence": "verify_net.py: 'statements 228 applied 228 errors []', max |diff| 0.0 for W1, b1, W2, b2, W3, b3."
+          },
+          {
+            "claim": "Vertical, hold/dodge, surfacing and centering logic behave as the reply states.",
+            "evidence": "probe_claude.py: row0/1/2 empty -> down; rows 4-5 -> fire; row 6/8 -> up; bullet in own row -> up/down 0.5/0.5; oxy 50 with 1 diver -> up p=1.0, with 0 divers -> fire; row1 oxy200 ndiv1 -> down; cells 6-7 -> left p=.92."
+          },
+          {
+            "claim": "The turn detector is corrupted by trails, by divers on the facing side, and by off-center positions.",
+            "evidence": "probe2.py: lone trail at col7 facing R -> right p=1.0; fish col9 + diver col2 facing L Tpre=+0.80 -> fire; cells 7-8 facing L Tpre=−0.80. missed_turns.py: turn missed in 349 of 919 approach-from-behind steps, 342 of them with a diver on the facing side."
+          },
+          {
+            "claim": "The sub does not stay parked: 748 horizontal shifts in 200 episodes, and the front column is outside 5-6 in 9.5% of row≥2 steps.",
+            "evidence": "colstats.py: {'turn_in_place': 1601, 'shift_same_dir': 748, 'noeffect': 264}; front col distribution 5: 0.531, 6: 0.374."
+          },
+          {
+            "claim": "The largest single death cause is deliberately climbing into an enemy while surfacing, 66 of 200 episodes; an oracle safe-surface wrapper raises the score to 10.9.",
+            "evidence": "deaths.py: ((True,'up',False), 66); counterfactual.py safesurf: mean 10.93 se 0.62, mean_len 470."
+          },
+          {
+            "claim": "Left/right presses cause 83 of 200 deaths, yet turning is load-bearing: disabling left/right drops the score to 2.36.",
+            "evidence": "samerow.py categories (30+29+14+10 = 83); counterfactual.py nohoriz: mean 2.36 se 0.24, mean_len 177."
+          },
+          {
+            "claim": "Oxygen is not the problem: 0 oxygen deaths, 1 empty-surface death, 99.5% of episodes pick up a diver.",
+            "evidence": "play_stats.py claude 200: causes contain no 'oxygen', 'surfaced_no_diver' 1; 'eps with >=1 pickup 0.995'; mean pickups 6.72."
+          },
+          {
+            "claim": "Astra's advantage is mainly survival: 1,432 vs 350 steps per episode, 23 vs 98 same-row deaths, and surfacing success about 96.5% vs 78%.",
+            "evidence": "play_stats.py astra 200: mean score 53.71, mean len 1431.8, 8.99 surfacings/ep; deaths.py astra: same-row 23, vertical 157 (119 sticky); colstats.py: kills/100 steps 3.33 vs 2.09, surfacing requests 9.315 vs 2.075/ep."
+          }
+        ],
+        "dir": "/Users/dhaneshneelamana/projects/wsp-replication/runs/cap128k/claude-opus-5-5/seaquest/attempt1",
+        "verification": [
+          {
+            "lens": "rerun",
+            "verdicts": [
+              {
+                "claim": "The scored net.npz is exactly the reply's edits applied to a zero net.",
+                "refuted": false,
+                "reason": "I rebuilt the network a different way: each line of the last edits block in answer.md was run as plain numpy code on zero arrays, without wsp.apply_edits. All 228 statements ran and every array matches net.npz exactly.",
+                "evidence": "refute_indep/c1_exec_edits.py: 'statements executed 228 failed 0'; W1/b1/W2/b2/W3/b3 'max|diff| vs float32(exec) 0.0'; nonzero 1555/27/69/6/6/5, total 1668, matching run.json nonzero_weights 1668."
+              },
+              {
+                "claim": "Vertical, hold/dodge, surfacing and centering logic behave as the reply states.",
+                "refuted": false,
+                "reason": "I built probe states by setting the real MinAtar env fields and reading them through wsp.make_obs_fn, not by hand-building arrays. Every listed behaviour reproduced. Non-surfacing danger avoidance also works. One gap: with SURF on, the sub still climbs into a fish directly above it. The reply's UP unit has a strong SURF term, but its 'Not moving into danger' bullet does not mention this exception.",
+                "evidence": "c2_probes.py: rows 0/1/2 empty -> down 1.0; row 3 -> down .946; rows 4/5 -> fire 1.0; row 6 -> up .983; row 8 -> up 1.0; row 5 bullet -> up .505/down .495; row 4/5 oxy50 dc1 -> up 1.0; oxy50 dc0 -> fire 1.0; row1 oxy200 dc1 -> down 1.0; cells 6-7 -> left .917; fish in own row -> fire. c2_danger.py: row7 + fish row6 col5 -> fire (no up); SURF row5 + fish row4 col5 -> up 1.0."
+              },
+              {
+                "claim": "The turn detector is corrupted by trails, by divers on the facing side, and by off-center positions.",
+                "refuted": false,
+                "reason": "Probes on env-built states give the same Tpre values. A separate rollout recorder, cross-checked against wsp.play_episode on 8 seeds, reproduces 349 missed turns out of 919 approach-from-behind steps. A counterfactual I added (removing own-row divers from the input) makes the turn fire in 336 of those 349 cases, so divers cause the misses rather than merely co-occurring with them.",
+                "evidence": "c3_probes.py: injected trail col7 facing R Tpre=+1.20 -> right 1.0; fish col9 + diver col2 facing L Tpre=+0.80 -> fire 1.0; cells 7-8 facing L Tpre=-0.80. analyze_turns.py (analyst window): turn on 570, missed 349, missed with diver on facing side 342, turn fires once divers removed 336."
+              },
+              {
+                "claim": "The sub does not stay parked: 748 horizontal shifts in 200 episodes, and the front column is outside 5-6 in 9.5% of row≥2 steps.",
+                "refuted": false,
+                "reason": "My own rollouts (seeds 0-199) give the same counts exactly. Measured by occupied cells rather than front column, the sub is off cells {5,6} in 16.6% of row≥2 steps, so the claim understates the drift if anything.",
+                "evidence": "analyze_claude.py: all rows {'turn_in_place': 1601, 'shift': 748, 'no_effect': 264}; rows≥2: 707 shifts; front col distribution 5: 0.531, 6: 0.374; outside 5-6 0.0946; occupied cells != {5,6} 0.1657."
+              },
+              {
+                "claim": "The largest single death cause is deliberately climbing into an enemy while surfacing, 66 of 200 episodes; an oracle safe-surface wrapper raises the score to 10.9.",
+                "refuted": false,
+                "reason": "Counting every collision death, I find 69 where the sub chose up while surfacing and moved into a new row. The next largest category is 45, so this is the largest. A one-step counterfactual shows firing or no-op would have survived in all 69. p(up) was ≥0.9 in 67 of 69, so 'deliberately' holds. Seven of the 69 were bullets and 3 had no identified killer, so 'into an enemy' strictly fits 59. The analyst's 66 is the subset with an identified killer. My own rewrite of the stated wrapper gives 10.93. A different one-step-lookahead oracle gives 10.46. Baseline on the same 200 seeds is 8.03.",
+                "evidence": "analyze_claude.py: 69 ('surf','up','chosen','vert'), next 45 ('nosurf','right','chosen','samerow'); 'surf_up_chosen & fire-or-noop survives': 69. analyze_turns.py: killers fish 35, sub 24, bullet 7, none-found 3. p_up.py: 67/69 p(up)≥0.9. interventions.py: base 8.025; surf_rule mean 10.930 se 0.621 len 469.9; surf_look mean 10.460 se 0.675."
+              },
+              {
+                "claim": "Left/right presses cause 83 of 200 deaths, yet turning is load-bearing: disabling left/right drops the score to 2.36.",
+                "refuted": false,
+                "reason": "Both numbers reproduce, but 'cause' is overstated. 85 deaths had left or right executed on the final step; 83 once the 2 deaths the analyst could not classify are excluded. A one-step counterfactual says firing or no-op would have saved the sub in only 67 of the 85. In 13, the sub pressed right at col 9 with no effect while a fish closed from behind (the col-9 trap). In 5, it turned, and firing or no-op would have died too. Taking left/right out of the softmax gives exactly 2.36. Replacing them with fire gives 1.82.",
+                "evidence": "analyze_claude.py: 'left/right executed at death step': 85, 'fire-or-noop would survive the step': 67. lr_deaths.py: [('noeffect','stay_dies') 13, ('shift','stay_survives') 40, ('turn','stay_dies') 5, ('turn','stay_survives') 27]. interventions.py: mask_lr mean 2.360 se 0.238 len 176.6; lr_to_fire mean 1.815 se 0.200."
+              },
+              {
+                "claim": "Oxygen is not the problem: 0 oxygen deaths, 1 empty-surface death, 99.5% of episodes pick up a diver.",
+                "refuted": false,
+                "reason": "My own death classifier and pickup counter (diver_count increments) give the same figures.",
+                "evidence": "analyze.py claude: death classes {'collision': 199, 'empty_surface': 1}; pickups/ep 6.72; episodes with ≥1 pickup 0.995."
+              },
+              {
+                "claim": "Astra's advantage is mainly survival: 1,432 vs 350 steps per episode, 23 vs 98 same-row deaths, and surfacing success about 96.5% vs 78%.",
+                "refuted": false,
+                "reason": "Scores, lengths, surfacings, kill rates and surfacing figures reproduce exactly. Same-row deaths are 29 vs 102 if every collision death is counted. The analyst's 23 vs 98 leaves out 6 Astra and 4 Claude deaths where their killer search failed. Survival dominates the gap: averaging over both orderings, episode length explains about 64% of the 45.7-point gap, kill rate (3.33 vs 2.09) about 24%, and the six-diver surfacing bonus about 12%.",
+                "evidence": "analyze.py astra: mean 53.71, len 1431.8, surfacings/ep 8.99, kills/100 3.333, requests/ep 9.315, surfacings/requests 0.965 (per-request success 0.959); same-row 29, vertical 161 (sticky 122). claude: len 350.5, kills/100 2.093, requests 2.075, ratio 0.778 (0.773); same-row 102. cmp_samerow.py: analyst 'unknown' = 6 same-row Astra, 4 same-row Claude."
+              },
+              {
+                "claim": "BUG: T units read ch4 (trail OR sub_back) at cols 4/6/7 with weights −0.8/+0.8/+1.6, so foreign trails are read as the sub's back cell; a lone col-7 trail exceeds the TURN threshold; the thinking flagged the risk but did not fix it.",
+                "refuted": false,
+                "reason": "The weights, the probe values, the quote in the reply and the quote in the thinking all check out. My counterfactual shows the bug changes behaviour: in 206 of 415 TURN-driven shifts, the turn unit stays off once foreign trails are removed. One mislabel: 707 is the count of all shifts in rows≥2, not just TURN- or sticky-driven ones. Of 593 TURN- or sticky-driven shifts, 259 had a foreign trail in cols 4/6/7; 250 of those were TURN-driven.",
+                "evidence": "c3_probes.py: ch4 = [0,0,0,0,-0.8,0,0.8,1.6,0,0] in all 7 T units; injected trail col7 facing R Tpre=+1.20 -> right 1.0; diver col8 moving R facing R Tpre=+1.60 -> right 1.0. analyze_turns.py: 707 shifts {'sticky': 178, 'TURN': 415, 'CENTER': 114}; ('TURN', trail) 250, ('sticky', trail) 9; 206 trail-caused. answer.md: 'is read from the back cell (ch4)'. thinking.md line 451 has the quoted sentence."
+              },
+              {
+                "claim": "BUG: T units and facing window are fixed in absolute columns; off cols 5-6 facing reads the wrong sign; an enemy at col 7 behind a sub on cols 8-9 counts as 'right'; centering is gated off while the row is occupied; reply says it 'never steers horizontally except to turn'.",
+                "refuted": false,
+                "reason": "The probes, the seed-2 replay and the three col-9 spawn deaths all reproduce. One number is wrong: using the analyst's own definition (front column outside 5-6), 315 of the 707 shifts began off-centre, not 261. With occupied cells instead, the figure is 457. Bullets in the row do not gate centering off; enemies, divers and adjacent-row danger do.",
+                "evidence": "c3_probes.py: cells 7-8 facing L Tpre=-0.80; cells 8-9 facing R + fish col7 Tpre=+1.60, TR=+1.0, CL=-0.92 -> right 1.0. episodes_show.py seed 2: x=9R presses right t508-516 (TR=+1.00) with fish col7->8, DEAD t516. Seeds 39/78/118: spawn timer 0, enemy at [9,row] after the step but not before, sub at col 9 for 11+ steps. analyze_turns.py off-centre starts: front_not_5_6 315."
+              },
+              {
+                "claim": "BUG: Divers count in the turn sum (diver 0.4, enemy 0.8, facing ±0.4 vs ±1.0 threshold), so a diver on the facing side cancels an enemy from behind; col 4 is in neither window; contradicts 'It turns to face the enemy and fires.'",
+                "refuted": false,
+                "reason": "The weights and probes confirm the arithmetic. The rollout counts match, and the diver-removal counterfactual shows divers cause 336 of the 349 missed turns. Widening the behind-window to include col 4 adds 5 misses. Seeds 6, 21 and 31 show the late turn (11, 11 and 8 steps facing a diver while a fish closed in, then a turn right and death on that step). In seeds 21 and 31, the final turn came from the fish's trail at col 7 (+1.6).",
+                "evidence": "c3_probes.py: facing L fish col9 + diver col2 Tpre=+0.80 -> fire; same without diver Tpre=+1.20 -> right; facing R fish col4 moving R Tpre=-0.40 -> fire. analyze_turns.py: 570 on + 349 missed = 919; 342 with diver on facing side; 336 fixed by removing divers; full window: 354 missed, 5 with enemy at col 4. episodes_show.py seeds 6/21/31: 'chose right ... DEAD' after a run of fire steps."
+              }
+            ]
+          },
+          {
+            "lens": "text",
+            "verdicts": [
+              {
+                "claim": "The scored net.npz is exactly the reply's edits applied to a zero net.",
+                "refuted": false,
+                "reason": "Confirmed. I reran wsp.apply_edits on answer.md, which has exactly one ```edits block, starting from the default zero net. Every parameter matches net.npz exactly.",
+                "evidence": "v1.py (scratchpad/analysis/seaquest_attempt1_verify/) printed: 'statements 228 applied 228 errors []'. For each of W1, b1, W2, b2, W3, b3 the max |diff| is 0.0. Nonzero counts are 1555/27/69/6/6/5, total 1668. This matches run.json nonzero_weights 1668 and parse {statements 228, applied 228, errors []}. 'num edits blocks 1'."
+              },
+              {
+                "claim": "Vertical, hold/dodge, surfacing and centering logic behave as the reply states.",
+                "refuted": true,
+                "reason": "The claim goes further than its evidence. The single-object probes do reproduce, but the reply also states as a strategy rule: 'Not moving into danger. It will not step into an adjacent row when something dangerous sits near its column there.' The weights break this rule. With SURF on, the UP pre-activation is about 28.2 − 6V − 6E, which is positive for any V and E, so surfacing climbs straight into an enemy directly above. The analyst's own probe_claude.py shows this ('row4 oxy 50 ndiv1, fish row3 col5 above' -> up p=1.0), and claim 5 counts 66 deaths from it. The dodge also steps into danger below 16% of the time. And off-centre at cells 7-8, a bullet in the row produces 'left' (p=1.0) instead of leaving the row, which contradicts 'If an enemy bullet is in its own row, it leaves the row.'",
+                "evidence": "Reran probe_claude.py. The listed probes reproduce: rows 0/1/2 -> down; rows 4/5 -> fire; rows 6/8 -> up; bullet -> up/down 0.5/0.5; oxy 50 ndiv 1 -> up 1.0; ndiv 0 -> fire; row1 oxy200 ndiv1 -> down; cells 6-7 -> left 0.92. The same run also gives 'row4 oxy 50 ndiv1, fish row3 col5 above ... argmax=up p=[0 0 1 0 0 0]'. My probe3.py gives: 'row2 SURF + esub row1 col5 above' -> up p=1.0; 'bullet own row col9 + fish row5 col5 (dodge, danger below)' -> p(up)=0.84, p(down)=0.16; 'cells7-8 facing L + bullet own row col1' -> TURN_L=0.99, CL=1.0, argmax=left p=1.0. Reply answer.md lines 13-14 contain the 'Dodging' and 'Not moving into danger' bullets."
+              },
+              {
+                "claim": "The turn detector is corrupted by trails, by divers on the facing side, and by off-center positions.",
+                "refuted": false,
+                "reason": "Confirmed both from the weights and in play. In the T units, ch4 (trail OR sub_back) is weighted [0,0,0,0,-0.8,0,0.8,1.6,0,0], so any foreign trail at col 4, 6 or 7 shifts the turn sum. ch2 (which includes divers) is weighted ±0.4 in the side windows. The facing term depends on absolute columns, giving −0.8 at cells 7-8 facing L. The play statistics reproduce exactly.",
+                "evidence": "probe2.py rerun: 'facing R (cells5-6), lone foreign trail at col7 Tpre=+1.20 ... argmax=right p=[0 0 0 1 0 0]'; 'facing L, fish col9 moving L + diver col2 Tpre=+0.80 ... argmax=fire'; 'cells7-8 facing L (front7), empty Tpre=-0.80'. missed_turns.py 200 rerun: 'steps with approaching enemy behind a centred sub (no enemy ahead): 919; turn_unit_on 570; missed:diver_on_facing_side 342 (37.2%); missed:other 6; missed:bullet_on_facing_side 1', so 349 were missed."
+              },
+              {
+                "claim": "The sub does not stay parked: 748 horizontal shifts in 200 episodes, and the front column is outside 5-6 in 9.5% of row≥2 steps.",
+                "refuted": false,
+                "reason": "Confirmed as stated. The front-column measure actually understates drift. Cells ≠ {5,6} happen in 16.6% of row≥2 steps (11,064 of 66,770), because front 6 facing L and front 5 facing R are also off-centre. The 748 figure counts shifts in all rows, sticky ones included. This contradicts the reply's 'The submarine stays parked in columns 5–6.'",
+                "evidence": "colstats.py claude 200 rerun: 'front col distribution (rows>=2): {... 4: 0.027, 5: 0.531, 6: 0.374, 7: 0.029, 8: 0.014, 9: 0.017}' (1 − 0.905 = 9.5%); 'left/right executions: {'turn_in_place': 1601, 'shift_same_dir': 748, 'noeffect': 264} per episode ... 3.74'. facing.py: centre-cells steps 55,706 vs off-centre 11,064 (8,320 + 1,504 + 1,240)."
+              },
+              {
+                "claim": "The largest single death cause is deliberately climbing into an enemy while surfacing, 66 of 200 episodes; an oracle safe-surface wrapper raises the score to 10.9.",
+                "refuted": false,
+                "reason": "The numbers reproduce. 66 deaths had the surfacing condition on, an executed 'up' that the network itself sampled (none sticky), and a collision in the new row. The weights explain this: SURF adds +15 to UP and overrides the E/V danger terms. Two caveats. 7 of the 66 killers were enemy bullets, not fish or subs (35 fish, 24 enemy subs). And 'largest' depends on how deaths are grouped: the finest same-row category is 30, but claim 6 groups 83 deaths under left/right presses.",
+                "evidence": "deaths.py claude 200 rerun: 'moved vertically into it: 94 of which surfacing-request on: 67'. d2.py over deaths_claude_200.json: '(True, 'up', False): 66'; kinds 'fish 35, enemy_sub 24, bullet 7'; sampled 'up' for all 66. samerow.py largest category: 30. counterfactual.py rerun: 'base mean 8.03 se 0.54 mean_len 351', 'safesurf mean 10.93 se 0.62 mean_len 470'."
+              },
+              {
+                "claim": "Left/right presses cause 83 of 200 deaths, yet turning is load-bearing: disabling left/right drops the score to 2.36.",
+                "refuted": true,
+                "reason": "The 83 is an association, not a measured cause. It counts same-row deaths on a step where left or right was executed, and 4 of those were sticky repeats where the network had sampled fire. MinAtar collides only with the front cell (sub_x), so for an enemy coming from behind, turning in place just moves the hit forward slightly. I ran a counterfactual: at the fatal step, execute fire instead (keeping the RNG in sync), then continue the policy. 17 of the 83 still die on that same step, and 31 more die within 5 steps. Of the 44 turn-in-place-into-killer-from-behind deaths, 41 die within 5 steps anyway. So 'cause 83 deaths' goes further than the evidence shows. The second half holds: a turn-only ablation (TURN_R/TURN_L forced off, centering kept) also gives 2.36.",
+                "evidence": "samerow.py rerun: 30+29+14+10 = 83 left/right categories. d2.py: 'same-row deaths with executed L/R: 83 sticky among them: 4 sampled: right 66, left 13, fire 4'. lr_cf.py: \"{'same step': 17, '<=5': 31, '>5..60': 12, 'survived 60': 23}\"; turn/behind: 17 same step + 24 within 5 + 3 alive. counterfactual.py: 'nohoriz mean 2.36 se 0.24 mean_len 177'. ablate.py: 'noturn mean 2.36 se 0.24', 'nocenter mean 7.07 se 0.43', 'base 8.03'."
+              },
+              {
+                "claim": "Oxygen is not the problem: 0 oxygen deaths, 1 empty-surface death, 99.5% of episodes pick up a diver.",
+                "refuted": false,
+                "reason": "The three facts are confirmed, including by an independent check that pre-step oxygen was never ≤0 at termination. The headline is only true in the narrow sense of running out of oxygen. Oxygen-triggered surfacing is still costly: 94 of 200 deaths occur with the surfacing condition on, and only 77% of surfacing requests reach the surface.",
+                "evidence": "play_stats.py claude 200 rerun: no 'oxygen' cause; 'surfaced_no_diver 1'; 'mean pickups 6.72 eps with >=1 pickup 0.995'. surf_success.py: claude {'req': 415, 'success': 321, 'fail_died': 94, 'oxy_death': 0}. deaths.py: 'all deaths with surf_req on: 94'."
+              },
+              {
+                "claim": "Astra's advantage is mainly survival: 1,432 vs 350 steps per episode, 23 vs 98 same-row deaths, and surfacing success about 96.5% vs 78%.",
+                "refuted": false,
+                "reason": "All the numbers reproduce. A per-request surfacing measure gives 95.9% vs 77.3%, close to the ratio-of-means figures. A matched-window check backs 'mainly survival'. In the first 300 steps the kill rates are similar (2.29 vs 2.07 per 100 steps), so Astra's higher overall rate (3.33 vs 2.09) comes mostly from the later, ramped-up phases it survives to reach.",
+                "evidence": "play_stats.py astra 200: 'mean score 53.71 ... mean len 1431.765'; surf_ok/ep 8.99. Claude: mean len 350.525, surf_ok/ep 1.615. deaths.py astra: 'same-row (no vertical move): 23', 'moved vertically into it: 157', 'sticky: 119'. Claude same-row: 98. colstats.py: kills/100 steps 3.33 vs 2.09; surfacing requests/ep 9.315 vs 2.075. surf_success.py: astra success/req 0.959, claude 0.773. killrate.py: first-300-step kills/100 astra 2.29, claude 2.069."
+              },
+              {
+                "claim": "BUG: The facing reading in the T units uses ch4 (trail OR sub_back) at cols 4/6/7 with weights −0.8/+0.8/+1.6, so enemy and diver trails are read as the sub's back cell. A single foreign trail at col 7 (+1.6) by itself exceeds the +1.0 TURN threshold, so the sub presses right whatever its facing. The reply says facing 'is read from the back cell (ch4)'; the weights read any trail.",
+                "refuted": false,
+                "reason": "The mechanism is confirmed. wsp.CHANNEL_MAP sets ch4 = trail OR sub_back. The T-unit ch4 weights are [0,0,0,0,-0.8,0,0.8,1.6,0,0]. TURN_R fires when Tpre > 1.0, because b2 = 209.536 = 240 − 40·tanh(1). A col-7 trail gives 1.2 when facing R and 2.0 when facing L. The reply quote and the thinking quote are accurate (thinking.md line 451), and the col-7 weight is unchanged in the final edits. One stat in the evidence is mislabelled: 250 is the number of TURN-driven shifts with a trail. Adding the 9 sticky ones gives 259, and the 707 denominator counts all shifts, CENTER included, not 'TURN- or sticky-driven' shifts (593).",
+                "evidence": "facing.py printed the T unit 11 ch4 weights [0 0 0 0 -0.8 0 0.8 1.6 0 0] and 'TURN_R W2 col: [40 x7] b2 209.536'. probe2.py: 'lone foreign trail at col7 Tpre=+1.20 ... right p=1'; 'diver col8 moving R (trail col7) Tpre=+1.60 ... right'. shifts.py 200: total 707; TURN with trail = 121+111+16+2 = 250; sticky with trail = 9; CENTER = 89+25. answer.md line 27: 'Facing (+0.5 = left) is read from the back cell (ch4) relative to ch0 within cols 4–7.'"
+              },
+              {
+                "claim": "BUG: The T units and the facing window are fixed in absolute columns (sides = cols 0-3 vs 7-9, facing calibrated for cells 4-7). When the sub drifts off cols 5-6, facing is read with the wrong sign, and an enemy at col 7 behind a sub on cols 8-9 counts as 'right'. Centering is gated off while anything is in the row, so the sub cannot return. The reply says it 'never steers horizontally except to turn'.",
+                "refuted": true,
+                "reason": "Part of the claim is wrong about the weights. Facing is read correctly at cells 4-5 and 6-7, which are the most common off-centre positions. The sign is wrong only at cells 3-4 and 7-8, and the reading is 0 at cells 0-3 and 8-9. In play, only 11% of off-centre row≥2 steps have a wrong-sign facing reading, while 75% read correctly. 'Centering is gated off while anything is in the row' also overstates it: a bullet drives E to −1, which turns centering on. And the evidence line '261 of the 707 shifts began off-center' is mislabelled: 261 is the TURN-driven subset, and all off-centre shift starts total 315. The rest checks out: absolute side windows, the cells 8-9 / col-7 'right' misread, the seed-2 replay (pressed right at col 9 from t=508 to t=516, then died), seeds 39, 78 and 118 (spawns at col 9 onto the sub's front), and the reply quote.",
+                "evidence": "facing.py, empty row: cells (4,5) L +0.40, R −0.40 (correct); cells (6,7) L +0.40, R −0.40 (correct); cells (7,8) L −0.80, R +0.80 (wrong); cells (3,4) L −0.40, R +0.40 (wrong); cells (8,9) and (0..3) 0.00. In play over 200 eps: off-centre 'correct' 8320, 'zero' 1504, 'wrong' 1240. probe3.py: 'cells7-8 facing L + bullet own row' CL=+1.0. shifts.py: off_center_start entries 134+111+28+25+13+2+1+1 = 315 (TURN-only 261). replay.py claude 2 500 520: front=9, a=right for t=508-516, 'DONE at 516'. unknowns.py: seed 39 spawned (9,2,False) on the sub at (9,2); seed 78 spawned (9,4) on the sub at (9,4); seed 118 spawned (9,3) after the sub moved down at col 9."
+              },
+              {
+                "claim": "BUG: Divers count in the turn sum, because ch2 is weighted equally with ch1: a diver is 0.4, an enemy 0.8, and facing gives only ±0.4 against a ±1.0 threshold. So one diver on the side the sub faces cancels an enemy approaching from behind (0.4 + 0.8 − 0.4 = 0.8 < 1.0), and the sub keeps firing away from the enemy. This contradicts the reply's 'It turns to face the enemy and fires.' Col 4 is also in neither side window, so an enemy at col 4 behind a right-facing sub gives Tpre=−0.4 and no turn.",
+                "refuted": false,
+                "reason": "Confirmed by the weights, the probes and play. The T-unit ch1 and ch2 weights are both ±0.4 in cols 0-3 and 7-9, and 0 at cols 4-6. The reply describes T as an 'enemy count', and its quoted sentence is accurate (answer.md line 11). All the cited statistics and traces reproduce.",
+                "evidence": "facing.py: T unit ch1 = ch2 = [-0.4 x4, 0, 0, 0, 0.4 x3]. probe2.py: 'facing L, fish col9 + diver col2 Tpre=+0.80 ... fire'; 'facing R, fish col4 moving R Tpre=-0.40 ... fire'. missed_turns.py: 919 steps, 349 missed, 342 (37.2%) with a diver on the facing side. late_turn.py: seeds 6 (t=227-233), 21 (t=190-196) and 31 (t=694-700) each show 7 fire steps at Tpre=+0.80 with a diver in cols 0-3 while a fish closes from cols 8/7, then a=right at the death step."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "game": "seaquest",
+        "attempt": 2,
+        "score": 7.451,
+        "design_summary": "Claude built a turret that tries to stay in the centre columns (4-5), turns to face an enemy in its own row and fires, and moves up or down toward rows that hold targets. The first layer has 4 groups of 7 units, one unit per player row 2-8 (weight 10 on each player cell, bias -20, so only the active row's unit is off -1). The groups are V (vertical pull toward rewards, plus a ±4 danger veto on the adjacent row in columns 2-7), O (facing direction, read from the player and trail channels in columns 3-6 only), D (side of the target in absolute columns: 0-3 count negative, 6-9 positive, enemies weigh ±1.2, divers and bullets ±0.6, plus a small re-centre term) and Y (enemy bullet in my row, danger minus reward). Two more units are global: S (oxygen below 60 and at least one diver, read from gauge cells (9,2) and (9,8)) and R01 (player in row 0 or 1). Layer 2 sums each group, which gives an affine function of the active unit, and thresholds it into 16 conditions: up-desire, down-veto, down-desire, up-veto, fire-right/left, turn-right/left, step-right/left, dodge-up/down, plus copies of S and R01 and their two ANDs. The logits form a priority table: dodge 10, leave rows 0/1 10, surface 9, fire or turn 7, vertical chase 3, step/re-centre 1.5, default fire 1, no-op 0, vetoed move -11 to -26. Divers are chased like targets, both vertically (V) and horizontally (the D step unit).",
+        "units": [
+          {
+            "layer": "L1 units 0-6 (V_k, rows 2-8)",
+            "units": "0-6",
+            "computes": "Gated vertical drive. A target in another row pulls the sub toward it (0.5, 0.4, 0.3... by distance). Danger in columns 2-7 of the row above or below gives ±4, pushing V into the band |V|>0.9, which acts as a veto. V_2 has an extra -0.5 bias and ignores row 1.",
+            "evidence": "probe2.py, sub row 5 cells 4-5: fish at row 4 col 0 gives V=+0.462 and up p=0.84; fish at row 6 col 0 gives V=-0.462 and down p=0.84; fish at row 4 col 5 gives V=-0.998 and up logit -25.99; fish at row 6 col 5 gives V=+0.998 and down logit -25.99. In play, inactive per-row units never differ from -1 by more than 1.19e-7 (drift.py)."
+          },
+          {
+            "layer": "L1 units 7-13 (O_k)",
+            "units": "7-13",
+            "computes": "Facing direction, as 2*(front-back) from channel-0 weights 2c+1 and channel-4 weights 18-4c, but only in columns 3-6. Outside that window the channel-0 weight is 10 and the channel-4 weight is 0.",
+            "evidence": "probe1.py, row 4: front col 5 facing R gives O=+0.964 and front col 4 facing L gives O=-0.964 (correct). Front col 7 facing R gives O=-0.995 and front col 2 facing L gives O=+0.995 (inverted). Front col 8 facing R and front col 1 facing L give O=0.000."
+          },
+          {
+            "layer": "L1 units 14-20 (D_k)",
+            "units": "14-20",
+            "computes": "Signed side of the target in absolute columns: columns 0-3 count -0.6, 6-9 count +0.6, and 4-5 count 0, for both danger and reward. An enemy gives ±1.2 (tanh ≈ ±0.83), a diver or bullet ±0.6 (±0.537). A re-centre term adds ±0.06 per column of drift.",
+            "evidence": "probe1.py: fish right gives D=+0.834 (facing R) and +0.793 (facing L); fish left gives -0.834/-0.867; empty with cells 5-6 gives D=-0.119 and left p=0.54. probe2.py: a diver in the row gives D=±0.537."
+          },
+          {
+            "layer": "L1 units 21-27 (Y_k)",
+            "units": "21-27",
+            "computes": "Enemy bullet in my row: 3*(danger) - 3*(reward) over the whole row, bias -21.5. An enemy cancels itself and a diver subtracts.",
+            "evidence": "probe2.py: bullet in row gives Y=+0.905 and up/down 0.50/0.50. Bullet plus a diver in the same row gives Y=-0.905 and no dodge (fire 0.73, noop 0.27)."
+          },
+          {
+            "layer": "L1 unit 28 (S), unit 29 (R01)",
+            "units": "28, 29",
+            "computes": "S = gauge(9,8) on AND gauge(9,2) off, meaning oxygen <60 and at least one diver. R01 = player in row 0 or 1.",
+            "evidence": "probe2.py: row 5, oxygen 50, 1 diver gives S=+0.99 and up p=1.00; 0 divers gives S=-0.99; oxygen 70 with 3 divers gives no surfacing. probe1.py: start state (row 0) gives R01=+1 and down p=1.00."
+          },
+          {
+            "layer": "L2 units 0-3",
+            "units": "0-3",
+            "computes": "Thresholds on the active V: up-desire (80V-4.8>0, V>0.06), down-veto (40V-36>0, V>0.9), down-desire (V<-0.06), up-veto (V<-0.9). The up logit gets 4.5*(upDes-dnVeto), so it is +9 only for 0.06<V<0.9.",
+            "evidence": "b2 values in answer.md lines 206-213. probe2.py shows chase logit +3.00 and veto logit -25.99."
+          },
+          {
+            "layer": "L2 units 4-9",
+            "units": "4-9",
+            "computes": "fireR/fireL/turnR/turnL = ±100D ± 40O - 110 (an enemy on the side AND facing it, or facing away). stepR/stepL = ±60D - 3.6, true for any |D|>0.06.",
+            "evidence": "probe1.py: facing the enemy gives fire p=1.00 (logit 7); facing away gives turn p=1.00 (logit 7); the step unit alone gives logit 1.5 and p=0.54-0.55."
+          },
+          {
+            "layer": "L2 units 10-15",
+            "units": "10-15",
+            "computes": "dodgeUp (80V+100Y-75.2) and dodgeDn (-80V+100Y-84.8), both on when |V| is small, so the dodge is 50/50. Then copies of S and R01, surf1 = S AND R01 (up 11 from row 1), and leave01 = R01 AND NOT S (down 10).",
+            "evidence": "probe2.py: bullet with danger above gives down p=1.00; with danger below gives up p=1.00. probe1.py: row 1 with oxygen 50 and 1 diver gives up p=1.00; row 1 with 0 divers gives up logit -25.99."
+          }
+        ],
+        "implementation_bugs": [
+          {
+            "description": "The orientation read O_k is only valid while both sub cells lie in columns 3-6. One column outside, the sign is inverted. Two or more columns outside, it is 0. The reply states flatly that O 'equals 2·(front − back)'. Inside the window, enemy trails also corrupt it: a fish moving away leaves its trail on the sub's cell and drives O to 0. The window was a deliberate trade-off, and my full-width linear version did much worse (1.18), but the off-window failure is not acknowledged.",
+            "evidence": "probe1.py: front col 7 facing R gives O=-0.995; col 2 facing L gives +0.995; col 8 R or col 1 L gives 0.000. probe3.py: fish at col 6 moving R with the sub at cells 4-5 facing R gives O=0.000. In play (summarize.py), O is wrong-sign on 6.7% and near zero on 4.9% of row 2-8 steps, but at the fatal step of 181 collisions it was wrong 62 times and zero 69 times (classify.py).",
+            "estimated_effect": "Replacing O with the true facing (oracle.py 'Oor', seeds 0-199) raises the mean from 8.34 to 11.14 and the length from 302 to 376. Ofix (linear over all columns) gives 1.18."
+          },
+          {
+            "description": "The step/re-centre units (h2 8/9, any |D|>0.06, logit 1.5) also fire for enemies whenever the fire/turn ANDs fail. They fail when O≈0, or when D is diluted below 0.716 by a diver or bullet on the other side. The sub then walks toward the enemy, although the reply describes this path only as 're-centre or step toward a diver'.",
+            "evidence": "probe3.py: sub at cells 7-8, fish adjacent at col 9 gives O=0, D=+0.686 and right p=0.55. A diver on the left plus a fish on the right gives D=+0.537, no fire, and right p=0.55. classify.py: 51 of 181 collisions are 'horizontal RECENTRE/step into enemy' (41 with O zero, 8 with O wrong, 2 with O ok).",
+            "estimated_effect": "The largest single collision class, 28% of collision deaths."
+          },
+          {
+            "description": "Horizontal steering toward divers overrides re-centring, and D uses absolute columns, not columns relative to the sub. The reply says the sub 'keeps near the centre columns (4–5)', but a diver weighs ±0.6 against 0.06 per column of drift, so the sub follows divers to the walls. Enemies spawn at the walls, and the O, D and veto windows all assume a centred sub. A diver at col 6 still reads as 'right' when the sub is at col 8.",
+            "evidence": "drift.py: of 763 exits from the central window (front col 3-6), 645 (84.5%) were the step unit with a diver in the row and no enemy; 89 (11.7%) were sticky repeats. probe3.py: sub at cells 7-8 with a diver at col 6 gives D=+0.235 and right p=0.55. rates.py: off-centre steps are 4823 of 60471 (8.0%) but carry 88 of 181 collisions (1.825 vs 0.167 per 100 steps).",
+            "estimated_effect": "Zeroing D's diver weight (experiments.py 'nodiverD': danger weight 1.2, reward weight 0) raises the mean from 8.34 to 14.16, the length from 302 to 506, and pickups from 5.29 to 6.51 per episode. Edge-column time drops from 3.2% to 0.1%. Combined with the O oracle the mean is 20.31."
+          },
+          {
+            "description": "The bullet detector Y = danger - reward is cancelled by any diver in the same row, so a bullet heading for the sub produces no dodge. The reasoning flagged this as rare.",
+            "evidence": "probe2.py: bullet at col 8 plus a diver at col 0 in the row gives Y=-0.905 and no dodge. classify.py: 6 of 181 collisions are 'enemy bullet in row masked by diver' (seeds 3, 8, 80, 101, 117, 128).",
+            "estimated_effect": "Small. The Y oracle gives 8.62 vs 8.34 (inside 1 se); on top of nodiverD+Oor it adds +1.5 (20.31 to 21.86)."
+          },
+          {
+            "description": "The three-level V encoding mixes up 'strong pull downward' with 'danger above'. Enough targets below push V below -0.9 and turn on the up-veto with no danger present. Together with the wide 6-column danger window, this can stop the surfacing ascent until oxygen runs out.",
+            "evidence": "vetocheck.py: 10.7% of up-veto activations had no danger in columns 2-7 of the row above. While S was on (4695 steps), up was vetoed on 3495 steps, 499 of them falsely. oxy.py: 12 of 14 oxygen deaths had divers aboard; the last state shows S and upVeto on in 11 of them (the twelfth, seed 145, ran out in row 1 just before surfacing).",
+            "estimated_effect": "Minor. 'vetofix' (reward pull scaled ×0.4) cuts oxygen deaths from 14 to 8 but the mean is 7.66 vs 8.34 (n.s.)."
+          }
+        ],
+        "failure_modes": [
+          {
+            "description": "Collision with a fish, an enemy sub or a bullet. Episodes end this way almost always, at a roughly constant hazard of about 0.3 per 100 steps (0.25 from the policy's own sampled action, 0.05 from sticky repeats).",
+            "evidence": "summarize.py on seeds 0-199: 181 collisions (fish 119, esub 39, ebullet 22, ebullet+esub 1); hazard per 100 steps by time window: 0.28, 0.34, 0.20, 0.31, 0.32, 0.51 (oxy.py).",
+            "frequency": "181/200 episodes (90.5%)"
+          },
+          {
+            "description": "Sideways moves into an enemy: the step unit (51) or the turn unit with an inverted O (22 total turn deaths).",
+            "evidence": "classify.py categories: horizontal step 41+8+2, horizontal turn 21+1.",
+            "frequency": "73/181 collisions (40%)"
+          },
+          {
+            "description": "Vertical move (chase, dodge or surface) into an enemy or bullet that the policy chose itself, often at edge columns where the column-2-7 veto window does not cover the sub's column.",
+            "evidence": "classify.py: 'vertical move into enemy/bullet' 35 (e.g. seed 4: sub at col 0 moves up into an enemy sub at col 0).",
+            "frequency": "35/181 collisions (19%)"
+          },
+          {
+            "description": "A sticky repeat of the previous move carries the sub into an enemy (28), or replaces an evasive action (2).",
+            "evidence": "classify.py; rates.py gives a sticky-step hazard of 0.050 per 100 steps (Astra 0.047).",
+            "frequency": "30/181 collisions (17%)"
+          },
+          {
+            "description": "The sub stays put and an enemy arrives. Usually O is wrong, so it fires the wrong way or does not turn.",
+            "evidence": "classify.py: stationary, O wrong 25, O zero 5, O ok 1 (e.g. seed 11: sub at cells 2-3 facing R, O=-0.995, fires right while an enemy sub approaches from the left).",
+            "frequency": "31/181 collisions (17%)"
+          },
+          {
+            "description": "Out of oxygen, mostly with divers aboard: the surface unit is on but the up-veto blocks the ascent.",
+            "evidence": "oxy.py: 14 oxygen deaths, 12 with dc>0, 11 of them with S and upVeto on at the last step.",
+            "frequency": "14/200 episodes (7%)"
+          },
+          {
+            "description": "Surfacing with no diver: in every case two consecutive sticky repeats of 'up' carry the sub from row 3 to row 0 while the policy chose down/right/noop.",
+            "evidence": "surf0.py: all 5 Claude cases (and all 5 Astra cases) show the executed action 'up' differing from the sampled action.",
+            "frequency": "5/200 episodes (2.5%)"
+          },
+          {
+            "description": "Low surfacing value: S only fires below 60 oxygen, so 6-diver surfacings pay at most 2 points; surfacings are rare because episodes are short.",
+            "evidence": "experiments.py base: 1.41 surfacings and 0.26 six-diver surfacings per episode, bonus 0.42 vs 7.92 kill points per episode.",
+            "frequency": "every episode"
+          }
+        ],
+        "why_this_score": "Score = points per step × survival. On seeds 0-199 (mean 8.34, se 0.64, against 7.451 over 1,000 episodes in run.json), Claude earns 0.0276 points per step (7.92 kills + 0.42 bonus per episode) and survives 302 steps (median 201). Survival is the limit. The mechanisms work in centred probes: fire p=1.00 when facing an enemy, turn p=1.00 when not, chase p=0.84, vetoes, a 50/50 dodge and surfacing p=1.00. But three things combine in play:\n1. Steering toward divers pulls the sub off-centre (84.5% of exits from the central window).\n2. Off-centre, every absolute-column read misfires: O inverts or goes to 0, D splits sides at the wrong columns, and the veto window misses the sub's column.\n3. The step unit then walks into enemies.\nOff-centre steps are 8% of play but 49% of collisions, at 11× the per-step death rate. The patch tests (all seeds 0-199) confirm causality: removing diver steering gives 14.16; the true facing gives 11.14; both give 20.31; adding a true bullet detector gives 21.86. Even with all three fixed the score is well below Astra's 53.7, so the rest of the gap comes from the design itself (turning in place, horizontal motion, absolute-column sensing), not from a single wrong weight. The reply's own reasoning predicted 'around 5 to 8 points' (thinking.md line 15).",
+        "vs_astra": "Astra's network never moves horizontally: b3 for left and right is -100, the sampled left/right rate is 0.0%, and the sub sits in column 5 100% of the time. It always faces left. It has 9 player-row units, diver-only row detectors (reward minus danger, so enemies do not count as divers), danger windows weighted around column 5 [0,0,2,4,7,7,7,5,2,0] that discount shootable enemies on the left, left-side shooting-opportunity detectors and a surface unit. A second layer scores fire/up/down candidates per row and takes a near-argmax.\nProbes (probe_astra.py): an enemy at col 1 on the left gives fire p=1.00. A fish 2 cells to the right or a bullet in the row gives up/down 0.50/0.50 (leave the row). A diver 2 rows away gives a move toward it with p=0.99. Danger directly above or below vetoes that move. Low oxygen with a diver gives up p=1.00.\nBecause the sub never leaves column 5, every column-specific weight stays aligned with its real position. That removes Claude's three biggest killers (sideways steps, turns, off-centre misreads): Astra has 0 off-centre steps. Its policy-step collision hazard is 0.019 per 100 steps against Claude's 0.250 (13× lower). The sticky-step hazard is the same for both (0.047 vs 0.050), and 136 of Astra's 190 collisions come from sticky vertical repeats.\nPer step the two are similar: kills 0.033 vs 0.026, pickups 0.021 vs 0.0175. Astra simply lives 4.7× longer (1432 vs 302 steps), so it rescues 30 divers and makes 3.1 six-diver surfacings per episode against 5.3 and 0.26. Both use the same surfacing rule (gauge (9,2) off and (9,8) on). So the score gap (53.7 vs 8.3 on the same seeds) is explained by survival, which comes from Astra's fixed-column design versus Claude's turning turret, which chases divers and depends on absolute-column windows.",
+        "key_claims": [
+          {
+            "claim": "The scored net is exactly the reply's edits block.",
+            "evidence": "verify.py: 204 statements, 204 applied, 0 errors; max |diff| between net.npz and the re-parsed answer.md is 0.0 for all 6 tensors."
+          },
+          {
+            "claim": "With the sub centred, the designed behaviours work: fire or turn at an enemy in the row (p=1.00), vertical chase (p=0.84), vetoes, dodge (0.50/0.50) and surfacing (p=1.00).",
+            "evidence": "probe1.py and probe2.py outputs, e.g. 'sub row4 col5 facing R; fish row4 col8' gives fire=1.00; 'row5 oxy 50 dc1' gives up=1.00."
+          },
+          {
+            "claim": "O_k is correct only for sub cells (3,4), (4,5) or (5,6): inverted one column outside, zero further out.",
+            "evidence": "probe1.py: front col 7 R gives O=-0.995; col 2 L gives +0.995; col 8 R and col 1 L give 0.000. At the fatal step O was wrong in 62 and zero in 69 of 181 collisions (classify.py)."
+          },
+          {
+            "claim": "Steering toward divers is what takes the sub off-centre, and off-centre play is where it dies.",
+            "evidence": "drift.py: 645 of 763 exits (84.5%) are diver steps. rates.py: 88 of 181 collisions happen in 8.0% of steps off-centre (1.825 vs 0.167 per 100 steps)."
+          },
+          {
+            "claim": "Removing diver steering and giving the true facing raise the score, but not to Astra's level.",
+            "evidence": "Seeds 0-199: base 8.34; nodiverD 14.16; Oor 11.14; nodiverD+Oor 20.31; +Yor 21.86; Astra 53.71 (experiments.py, oracle.py)."
+          },
+          {
+            "claim": "Episodes end by collision in 90.5% of cases; oxygen deaths (7%) mostly have divers aboard and an up-veto on; all no-diver surfacings are double sticky repeats.",
+            "evidence": "summarize.py: collision 181, oxygen 14, surface_no_diver 5; oxy.py: 12 of 14 with dc>0; surf0.py: executed 'up' differs from the sampled action in all 5."
+          },
+          {
+            "claim": "The gap to Astra is survival, not scoring rate: the policy-caused collision hazard is 13× higher, while the sticky hazard is the same.",
+            "evidence": "rates.py: policy-step hazard 0.250 vs 0.019 per 100 steps, sticky-step 0.050 vs 0.047; points per step 0.0276 vs 0.0375; length 302 vs 1432 (summarize.py)."
+          },
+          {
+            "claim": "Astra holds column 5 facing left and only changes rows, firing left and leaving the row when a threat comes from the right.",
+            "evidence": "summarize.py: Astra column occupancy 100% at col 5, sampled left/right 0.0%. probe_astra.py: fish at col 7 on the right gives up/down 0.50/0.50; fish at col 1 on the left gives fire 1.00."
+          }
+        ],
+        "dir": "/Users/dhaneshneelamana/projects/wsp-replication/runs/cap128k/claude-opus-5-5/seaquest/attempt2",
+        "verification": [
+          {
+            "lens": "rerun",
+            "verdicts": [
+              {
+                "claim": "The scored net is exactly the reply's edits block.",
+                "refuted": false,
+                "reason": "I rebuilt the net with my own parser, which runs each edits line as numpy code instead of using wsp.apply_edits. It matches net.npz exactly.",
+                "evidence": "refute/c1_exec_parse.py output: 'edits blocks found: 1', 'statements 204 executed 204'. max|diff| = 0.0 for W1, b1, W2, b2, W3 and b3. 1280 nonzero weights in total, which matches run.json nonzero_weights 1280."
+              },
+              {
+                "claim": "With the sub centred, the designed behaviours work: fire or turn at an enemy in the row (p=1.00), vertical chase (p=0.84), vetoes, dodge (0.50/0.50) and surfacing (p=1.00).",
+                "refuted": false,
+                "reason": "I built synthetic game states (my own state builder in probe_lib.py) for the centred placements: front col 4 or 5, facing L or R, in rows 3, 5 and 7. Every designed behaviour works there.",
+                "evidence": "refute/c2_probes.py: a fish or enemy sub at cols 0-2 or 7-9 gives the intended fire or turn at p=0.997-0.999 in all 48 row-5 cases, and no row-3 or row-7 case fell below 0.99. A target in rows 2-4 gives 'up=0.84'; rows 6-8 give 'down=0.84'; row-1 targets are ignored. Danger in the adjacent row gives upVeto/dnVeto with that move at p=0.00. A lone bullet in the row gives 'up=0.50 down=0.50'. 'row5 oxy50 dc1' gives 'up=1.00' (also rows 2 and 8). With dc0 or oxy150 there is no surfacing."
+              },
+              {
+                "claim": "O_k is correct only for sub cells (3,4), (4,5) or (5,6): inverted one column outside, zero further out.",
+                "refuted": false,
+                "reason": "I scanned every reachable placement in an empty row and got exactly the claimed pattern. My own fatal-step tally reproduces the O counts.",
+                "evidence": "refute/c3_O_scan.py: cells (3,4), (4,5) and (5,6) give O=±0.964 'ok'. Cells (2,3) and (6,7) give ±0.995 'INVERTED' in both facings. Cells (0,1), (1,2), (7,8) and (8,9) give 0.0. refute/a_fatal.py on my own replay of seeds 0-199: 181 collisions; O at the fatal observation is ok 48, zero 69, wrong 62, n/a 2. The counts are the same at |O| thresholds 0.2, 0.5 and 0.8."
+              },
+              {
+                "claim": "Steering toward divers is what takes the sub off-centre, and off-centre play is where it dies.",
+                "refuted": false,
+                "reason": "My own exit counter reproduces the analyst's numbers exactly. It also shows that 638 of the 645 diver-step exits moved toward a diver.",
+                "evidence": "refute/a_drift_noterm.py: 763 exits from front col 3-6. 645 (84.5%) were step units with a diver and no enemy in the row; 89 (11.7%) were sticky; 638 of the 645 moved toward a diver. Including terminal steps (a_drift.py) gives 775 exits, 645 of them diver steps (83.2%). refute/a_fatal.py: 88 of 181 collisions start off-centre (front col 0-2 or 7-9), which is 4823 of 60471 steps (8.0%). Rates are 1.825 vs 0.167 per 100 steps."
+              },
+              {
+                "claim": "Removing diver steering and giving the true facing raise the score, but not to Astra's level.",
+                "refuted": false,
+                "reason": "I ran different interventions: hidden-layer overrides computed from the true game state, not the analyst's weight edits. They give nearly the same scores, and all stay far below Astra.",
+                "evidence": "refute/c5_interv.py, seeds 0-199: base 8.34; noDivD (diver cells removed from D's input) 14.20; trueO 11.14; noDivD+trueO 20.62; noDivD+trueO+trueY 21.82. refute/record.py gives Astra 53.71. Analyst: 14.16 / 11.14 / 20.31 / 21.86."
+              },
+              {
+                "claim": "Episodes end by collision in 90.5% of cases; oxygen deaths (7%) mostly have divers aboard and an up-veto on; all no-diver surfacings are double sticky repeats.",
+                "refuted": true,
+                "reason": "The cause counts and the oxygen statistics reproduce. The claim that all no-diver surfacings are double sticky repeats does not. In seed 191 the first 'up' (row 2 to row 1) was sampled by the policy, so only the last step was a sticky repeat. 4 of 5 are double sticky, not 5 of 5.",
+                "evidence": "refute/a_causes.py: collision 181 (90.5%), oxygen 14, surface_no_diver 5. refute/a_oxy.py: dc>0 in 12 of 14 oxygen deaths; S and upVeto on at the last observation in 11. Seeds 27, 70, 146 and 157 show two consecutive steps where up was executed although another action was sampled. Seed 191: '(108, 2, 0, 'up', 'up'), (109, 1, 0, 'down', 'up')'. refute/a_detail.py at seed 191 t=108: sampled=up, exec=up, V=+0.834, on=['upDesire'], p(up)=0.838; the previous executed action was 'left', so this up was not sticky."
+              },
+              {
+                "claim": "The gap to Astra is survival, not scoring rate: the policy-caused collision hazard is 13× higher, while the sticky hazard is the same.",
+                "refuted": false,
+                "reason": "Every number reproduces. Astra's overall points per step are 36% higher, but only in late episode phases that Claude's sub never reaches. In the first 300 steps Astra scores more slowly than Claude. One caveat: 'sticky hazard the same' holds per 100 total steps. Per step where the sticky rule actually changed the action, Astra's rate is 2.2× higher.",
+                "evidence": "refute/a_causes.py: Claude 60471 steps, 151 policy and 30 sticky collisions, 0.250 and 0.050 per 100 steps, 0.0276 points/step, mean length 302.4. Astra: 286353 steps, 0.019 and 0.047 per 100 steps, 0.0375 points/step, mean length 1431.8. Per changed step: Claude 0.919 vs Astra 2.041 per 100. refute/a_rate.py, points/step for t<300: Claude 0.0261, Astra 0.0241. For t>=1000: Astra 0.0466."
+              },
+              {
+                "claim": "Astra holds column 5 facing left and only changes rows, firing left and leaving the row when a threat comes from the right.",
+                "refuted": false,
+                "reason": "My replay of Astra's 200 episodes and my own probes of Astra's net both confirm this. Nuance: a fish at col 8 or 9 still gets mostly 'fire'; Astra leaves the row only when the threat reaches col 7. It also leaves for an enemy adjacent on the left, at col 4.",
+                "evidence": "refute/a_causes.py (Astra): front col occupancy {5: 286353}; facing right {False: 286353}. Sampled actions: up 29889, down 30513, fire 225951, left/right 0. refute/c8_astra.py, row 5: fish@col7 moving L gives 'up=0.50 down=0.50'; fish@col1 gives 'fire=1.00'; fish@col8 gives fire=0.73. Row 2 gives down=1.00 and row 8 gives up=1.00 for the col-7 threat."
+              },
+              {
+                "claim": "BUG: The orientation read O_k is only valid while both sub cells lie in columns 3-6. One column outside, the sign is inverted. Two or more columns outside, it is 0. The reply states flatly that O 'equals 2·(front − back)'. Inside the window, enemy trails also corrupt it: a fish moving away leaves its trail on the sub's cell and drives O to 0. The window was a deliberate trade-off, and my full-width linear version did much worse (1.18), but the off-window failure is not acknowledged.",
+                "refuted": false,
+                "reason": "Every empirical part reproduces with my own code. Two caveats on wording. First, the reply's sentence goes on to say O is 'read from the player and trail channels in columns 3–6', so it names the window, although it never says O fails outside it. Second, answer.md does not acknowledge the failure, but the reasoning does (thinking.md lines 465 and 541).",
+                "evidence": "refute/c3_O_scan.py: inverted at ±0.995 one column outside, 0.0 further out. refute/c9_13_probes.py: 'sub cells4-5 facing R, fish@6 moving R (trail@5) O=+0.000', and the same for an enemy sub. refute/a_fatal.py: of 59085 row 2-8 steps, 6.7% have O wrong and 4.9% near zero; at the fatal step, wrong 62 and zero 69. refute/c9_fullwidth.py: w0=2c+1, w4=18-4c gives 1.18 on seeds 0-199; another exact full-width version (w0=10+2c, w4=-4c) gives 2.37. thinking.md lines 287 and 297 show the window was chosen to avoid trail contamination. Line 541: 'stray weights outside the window could push an off-center sub to the wrong value'."
+              },
+              {
+                "claim": "BUG: The step/re-centre units (h2 8/9, any |D|>0.06, logit 1.5) also fire for enemies whenever the fire/turn ANDs fail. They fail when O≈0, or when D is diluted below 0.716 by a diver or bullet on the other side. The sub then walks toward the enemy, although the reply describes this path only as 're-centre or step toward a diver'.",
+                "refuted": false,
+                "reason": "The probes and my own collision classifier reproduce this. One nuance: when a bullet on the other side dilutes D, the dodge units win (up/down 0.50/0.50), so in that case the sub does not walk toward the enemy. The diver case and the O≈0 case do.",
+                "evidence": "refute/c9_13_probes.py: sub at cells 7-8, either facing, with a fish at col 9 gives 'O=+0.000 D=+0.686 on=[stepR] right=0.55'. A diver at col 0, 1 or 2 plus a fish at col 8, sub centred, gives 'D=+0.537 on=[stepR] right=0.55 fire=0.33'. A bullet at col 1 plus a fish at col 8 gives 'up=0.50 down=0.50'. refute/a_fatal.py: 51 policy-chosen horizontal fatal steps with a step unit on and no turn unit (O zero 41, wrong 8, ok 2). refute/a_step51.py: all 51 killed by a fish or enemy sub, 49 with an enemy on the side moved, 48 with |D|<0.716, 13 with a diver on the other side. answer.md: 'a smaller |D| means re-centre or step toward a diver'."
+              },
+              {
+                "claim": "BUG: Horizontal steering toward divers overrides re-centring, and D uses absolute columns, not columns relative to the sub. The reply says the sub 'keeps near the centre columns (4–5)', but a diver weighs ±0.6 against 0.06 per column of drift, so the sub follows divers to the walls. Enemies spawn at the walls, and the O, D and veto windows all assume a centred sub. A diver at col 6 still reads as 'right' when the sub is at col 8.",
+                "refuted": false,
+                "reason": "The probes and the drift counts reproduce. One numeric detail is off: the re-centre weight is 0.06 per player cell, and the sub has two cells, so D shifts by 0.12 per column of drift, not 0.06. A diver (0.6) still outweighs up to 5 columns of drift, so the conclusion holds.",
+                "evidence": "refute/c9_13_probes.py: sub at cells 7-8 with a diver at col 6 gives 'D=+0.235 on=[stepR] right=0.55' for both facings. The same empty row gives D=-0.345, a pre-activation of -0.36, which is 3 columns times 0.12. Sub at cells 4-5 with a diver at col 8 gives right=0.55. refute/a_drift_noterm.py: 645 of 763 exits (84.5%) were diver steps; 89 (11.7%) were sticky. refute/a_fatal.py: off-centre steps 4823 of 60471 (8.0%) carry 88 of 181 collisions. refute/a_step51.py: front-col occupancy is 0.47% at col 0 and 0.55% at col 9. The MinAtar source spawns enemies at x=0 or 9."
+              },
+              {
+                "claim": "BUG: The bullet detector Y = danger - reward is cancelled by any diver in the same row, so a bullet heading for the sub produces no dodge. The reasoning flagged this as rare.",
+                "refuted": false,
+                "reason": "The probe, the fatal-step count with the same six seeds, and the reasoning quote all check out.",
+                "evidence": "refute/c9_13_probes.py: 'bullet@8 + diver@0 Y=-0.905 on=[] noop=0.27 fire=0.73', with no dodge; bullet@2 plus diver@7 and bullet@7 plus diver@3 behave the same. A bullet plus an enemy fish still dodges (Y=+0.905). refute/a_fatal.py: 6 deaths of type 'stay: bullet in row, diver in row, Y<0', seeds [3, 8, 80, 101, 117, 128]. thinking.md line 373: 'A diver in the same row would cancel the signal, which I'm treating as rare enough to ignore.'"
+              },
+              {
+                "claim": "BUG: The three-level V encoding mixes up 'strong pull downward' with 'danger above'. Enough targets below push V below -0.9 and turn on the up-veto with no danger present. Together with the wide 6-column danger window, this can stop the surfacing ascent until oxygen runs out.",
+                "refuted": false,
+                "reason": "The mechanism and the counts reproduce. A veto oracle shows the false vetoes cause some oxygen deaths. One error in the evidence: seed 145 is not the exception. Its last observation has both S and upVeto on, and it is counted among the 11. The seed without upVeto at the last observation is 152 (V=-0.898, just above the -0.9 cut-off).",
+                "evidence": "refute/c9_13_probes.py: 3 divers in the row below, with S on, give 'V=-0.905 on=[dnDesire,upVeto,S] up=0.01'; 2 divers give V=-0.762 and up=1.00. refute/a_veto.py: up-veto false in 10.7% of activations (1423 of 13335); S on 4695 steps, up vetoed 3495, 499 of them false. In 6 of the 12 oxygen deaths with divers, the final 80 steps include false vetoes (seeds 50, 58, 145, 152, 167, 192). refute/c13_veto_oracle.py: forcing the up-veto off when there is no danger in cols 2-7 of the row above cuts oxygen deaths with divers from 12 to 8. refute/a_oxy.py: seed 145's last on-list includes 'upVeto'; seed 152's is ['dnDesire', 'S']."
+              }
+            ]
+          },
+          {
+            "lens": "text",
+            "verdicts": [
+              {
+                "claim": "The scored net is exactly the reply's edits block.",
+                "refuted": false,
+                "reason": "Confirmed. I re-parsed answer.md with wsp.apply_edits and compared it to net.npz: they match exactly. The nonzero count also matches run.json.",
+                "evidence": "seaquest_attempt2_verify/v1.py: 'statements 204 applied 204 errors []'; max|diff| is 0.0 for W1, b1, W2, b2, W3 and b3; 'nnz total 1280', which equals run.json nonzero_weights 1280."
+              },
+              {
+                "claim": "With the sub centred, the designed behaviours work: fire or turn at an enemy in the row (p=1.00), vertical chase (p=0.84), vetoes, dodge (0.50/0.50) and surfacing (p=1.00).",
+                "refuted": false,
+                "reason": "The cited probe outputs reproduce exactly for the standard centred configurations. The claim is broader than the probes, though. The analyst's own probes show centred failures: a bullet plus a diver in the row gives no dodge, and a fish moving away whose trail lands on the sub's cell gives O=0, so the sub walks toward the fish instead of firing. Two symmetric targets above and below cancel V and give no chase.",
+                "evidence": "Re-ran probe1.py: 'sub row4 col5 facing R; fish row4 col8' gives fire=1.00; turn cases give left/right=1.00. Re-ran probe2.py: chase up/down=0.84; fish above or below gives p(up) or p(down)=0.00; 'ebullet row5 col8' gives up 0.50 / down 0.50; 'row5 oxy 50 dc1' gives up=1.00. Exceptions: 'ebullet row5 col8 + diver row5 col0' gives Y=-0.905 and no dodge; probe3 'fish col6 moving R' gives O=+0.000 and right=0.55; 'fish row4 AND row6' gives V=0.000 and fire 0.73."
+              },
+              {
+                "claim": "O_k is correct only for sub cells (3,4), (4,5) or (5,6): inverted one column outside, zero further out.",
+                "refuted": false,
+                "reason": "Confirmed from the weights and the probes. The ch0 weights for O are 10 except 7,9,11,13 at cols 3-6, the ch4 weights are 6,2,-2,-6 at cols 3-6, and the bias is -20. That gives a pre-activation of ±2 inside the window. One column out, both facings give ∓3 (inverted). Further out the sum is 10+10-20=0. The fatal-step counts also reproduce.",
+                "evidence": "v1.py prints 'O row2 ch0 cols0-9: [10,10,10,7,9,11,13,10,10,10]', 'ch4: [0,0,0,6,2,-2,-6,0,0,0]', b1[7]=-20. probe1.py: front col7 R gives O=-0.995; col2 L +0.995; col6 L +0.995; col3 R -0.995; col8 R and col1 L 0.000. classify.py (re-run): 'O state at fatal step: {ok: 48, zero: 69, wrong: 62, None: 2}'."
+              },
+              {
+                "claim": "Steering toward divers is what takes the sub off-centre, and off-centre play is where it dies.",
+                "refuted": true,
+                "reason": "The first half holds: 645 of 763 exits are diver-driven steps, and none of them had a bullet in the row. The second half overstates its own evidence. By the claim's definition (front col 3..6 counts as centre), only 88 of 181 collisions (48.6%) happen off-centre, and 93 (51.4%) happen centred. The hazard is about 11 times higher off-centre, but deaths are split roughly evenly, so 'where it dies' is not supported. With a different definition (both sub cells inside the O window, cols 3-6), 120 of 181 are outside. That is not the definition the claim uses.",
+                "evidence": "Re-ran drift.py: '763 exits … 645 84.5% step unit with diver in row, no enemy'. drift_b.py: none of the 645 had a bullet in the row. Re-ran rates.py: 'front col 3..6 at fatal step: 93 deaths / 55648 steps (0.167 per 100); front col 0-2,7-9: 88 deaths / 4823 steps (1.825 per 100)'. offcentre.py: 'front col 3..6: 93; both cells in 3..6 (O window): 61; outside O window: 120'."
+              },
+              {
+                "claim": "Removing diver steering and giving the true facing raise the score, but not to Astra's level.",
+                "refuted": false,
+                "reason": "All cited means reproduce. One possible confound: the nodiverD variant also doubles the D weight on enemy bullets (0.6 to 1.2), not just removing divers. I tested an oracle that drops only diver cells from the D input and it gives the same score, so the gain is due to removing diver steering.",
+                "evidence": "Re-ran experiments.py: base 8.34, nodiverD 14.16, Ofix 1.18, astra 53.71. oracle.py: Oor 11.14, ndD+Oor 20.31, ndD+Oor+Yor 21.86 (200 episodes, seeds 0-199). nodiver_only.py (D computed with diver-only cells removed, nothing else changed): 'divOnly mean 14.24 (se 1.01) len 508.1'."
+              },
+              {
+                "claim": "Episodes end by collision in 90.5% of cases; oxygen deaths (7%) mostly have divers aboard and an up-veto on; all no-diver surfacings are double sticky repeats.",
+                "refuted": true,
+                "reason": "The 90.5% (181/200) and 7% (14/200) figures, 12 of 14 with divers, and up-veto on in the final state are all confirmed. 'All no-diver surfacings are double sticky repeats' is false. In seed 191 the policy itself sampled and executed 'up' at row 2 (upDes on). Only the last step, at row 1, was a sticky repeat. So 4 of 5 are double sticky, not all 5. The cited evidence ('differs … in all 5') only shows that the final step was sticky.",
+                "evidence": "Re-ran surf0.py: claude seed 191: [(2,0,192,'left','left',[upDes,dnVeto]), (2,0,191,'up','up',['upDes']), (1,0,190,'down','up',[...])]. Seeds 27, 70, 146 and 157 show sampled≠executed at both row 2 and row 1. deaths2.py: 'claude Counter({collision: 181, oxygen: 14, surface_no_diver: 5})'. summarize.py: 'oxygen deaths with dc>0 at death: 12 of 14'."
+              },
+              {
+                "claim": "The gap to Astra is survival, not scoring rate: the policy-caused collision hazard is 13× higher, while the sticky hazard is the same.",
+                "refuted": true,
+                "reason": "The hazard figures are confirmed: 0.250 vs 0.019 is 13.2 times, and the sticky hazards are 0.050 vs 0.047. 'Not scoring rate' is contradicted by the claim's own numbers: Astra scores 0.0375 points per step against 0.0276, which is 36% higher. Kills per step are also higher (0.0333 vs 0.0262). At Claude's rate over Astra's mean length (1431.8 steps), the score would be about 39.5, not 53.7. So survival explains most of the gap but not all of it.",
+                "evidence": "Re-ran rates.py: 'claude … policy-step collision hazard 0.250/100 steps, sticky-step hazard 0.050/100 steps; points/step 0.0276'; 'astra … 0.019 … 0.047 … points/step 0.0375'. experiments.py: base kills/ep 7.92, len 302.4; astra kills/ep 47.73, len 1431.8. 0.0276 × 1431.8 ≈ 39.5."
+              },
+              {
+                "claim": "Astra holds column 5 facing left and only changes rows, firing left and leaving the row when a threat comes from the right.",
+                "refuted": false,
+                "reason": "Confirmed: Astra occupies col 5 100% of the time and never samples left or right (logit -100 in every probe). Its reply says 'stays at the starting column, firing left while changing rows'. Caveat: it only leaves the row when the right-side threat is within about 2 columns (col 6 or 7) or is a bullet. A fish or enemy sub at col 8 or 9 gives up/down 0.14/0.14 and fire 0.73, which is the same as the empty-row baseline.",
+                "evidence": "Re-ran summarize.py: astra 'col occupancy %: [0,0,0,0,0,100.0,0,0,0,0]', left/right 0.0%. Re-ran probe_astra.py: fish col7 or col6 gives up 0.50/down 0.50; ebullet col8 gives 0.50/0.50; fish col1 gives fire 1.00; fish col8 and esub col8 give up 0.14/down 0.14/fire 0.73; empty row5 gives 0.12/0.12/0.75. Astra answer.md line 1."
+              },
+              {
+                "claim": "BUG: The orientation read O_k is only valid while both sub cells lie in columns 3-6. One column outside, the sign is inverted. Two or more columns outside, it is 0. The reply states flatly that O 'equals 2·(front − back)'. Inside the window, enemy trails also corrupt it: a fish moving away leaves its trail on the sub's cell and drives O to 0. The window was a deliberate trade-off, and my full-width linear version did much worse (1.18), but the off-window failure is not acknowledged.",
+                "refuted": true,
+                "reason": "All the technical parts check out: the window behaviour, the trail contamination, Ofix=1.18, 6.7%/4.9%, and 62/69 at the fatal step. The statements about the source do not. The reply's sentence is not flat: it reads 'It equals 2·(front − back), read from the player and trail channels in columns 3–6.' The reasoning also explicitly acknowledges the off-window failure: thinking.md line 465 says 'the window cutoff could skew the sum when it sits outside', and line 541 says 'the stray weights outside the window could push an off-center sub to the wrong value.' At most, the failure is unacknowledged in the final answer, not in the response as a whole.",
+                "evidence": "answer.md line 16. thinking.md lines 289, 297, 465, 467 and 541. probe1.py and probe3.py ('fish col6 moving R (trail at col5)' gives O=+0.000). experiments.py Ofix 'mean 1.18'. summarize.py 'wrong-sign 6.7% near-zero 4.9% of 59085 steps'. classify.py 'zero: 69, wrong: 62'."
+              },
+              {
+                "claim": "BUG: The step/re-centre units (h2 8/9, any |D|>0.06, logit 1.5) also fire for enemies whenever the fire/turn ANDs fail. They fail when O≈0, or when D is diluted below 0.716 by a diver or bullet on the other side. The sub then walks toward the enemy, although the reply describes this path only as 're-centre or step toward a diver'.",
+                "refuted": false,
+                "reason": "Confirmed. recR has pre-activation 60D-3.6, so it switches on at D>0.06. The reply line 17 reads '…a smaller |D| means re-centre or step toward a diver.' The probes and the classification reproduce exactly.",
+                "evidence": "answer.md lines 17 and 226-229 (W2[14:21,8]=60, b2[8]=356.4). Re-ran probe3.py: 'sub front col8 facing R (cells 7,8); fish col9' gives O=+0.000, D=+0.686, h2 on: recR, right=0.55. probe3 'diver col3 + fish col8' gives D=+0.537, recR only, right 0.55. classify.py: 'horizontal RECENTRE/step into enemy' O zero 41, O wrong 8, O ok 2 (total 51)."
+              },
+              {
+                "claim": "BUG: Horizontal steering toward divers overrides re-centring, and D uses absolute columns, not columns relative to the sub. The reply says the sub 'keeps near the centre columns (4–5)', but a diver weighs ±0.6 against 0.06 per column of drift, so the sub follows divers to the walls. Enemies spawn at the walls, and the O, D and veto windows all assume a centred sub. A diver at col 6 still reads as 'right' when the sub is at col 8.",
+                "refuted": false,
+                "reason": "Confirmed in substance, with one numeric correction. The re-centre weights step by 0.06 per column for each player cell. The sub has two cells, so D's pre-activation changes by 0.12 per column of drift, not 0.06: it is 0.60-0.12c for cells (c-1,c). That gives D=-0.235 at cells (6,7) and -0.345 at (7,8). The conclusion still holds: a diver at ±0.6 outweighs the re-centre term up to 5 columns off, which reaches the wall. The other parts are confirmed: absolute side windows (cols 0-3 at -0.6, 6-9 at +0.6), the quote, spawning at x=0 or 9, and the drift and rate numbers.",
+                "evidence": "answer.md line 5 ('keeps near the centre columns (4–5)'). v1.py: D ch0 [10.27 … 9.73], ch1/ch2 [-0.6×4, 0, 0, 0.6×4]. probe1.py: front col7 R gives D=-0.235; front col8 R gives D=-0.345. probe3.py: diver col6 with sub cells 7,8 gives D=+0.235, right 0.55. minatar seaquest.py line 232: 'x = 0 if lr else 9'. drift.py: 763 / 645 (84.5%) / 89 (11.7%). rates.py: 88 deaths / 4823 off-centre steps vs 93 / 55648."
+              },
+              {
+                "claim": "BUG: The bullet detector Y = danger - reward is cancelled by any diver in the same row, so a bullet heading for the sub produces no dodge. The reasoning flagged this as rare.",
+                "refuted": false,
+                "reason": "Confirmed. The Y weights are player 10, danger +3, reward -3, bias -21.5. So one bullet gives +1.5 (Y=+0.905), and bullet plus diver gives -1.5 (Y=-0.905). The reasoning explicitly accepted this as rare. Minor nuance: one diver cancels one bullet, but two bullets plus one diver would still trigger a dodge.",
+                "evidence": "v1.py: 'Y row2 ch0/1/2: 10.0 3.0 -3.0 b -21.5'. probe2.py: 'ebullet row5 col8 + diver row5 col0' gives Y=-0.905, noop 0.27 / fire 0.73, no dodge. thinking.md line 373: 'A diver in the same row would cancel the signal, which I'm treating as rare enough to ignore.' classify.py: '6 (3.3%) enemy bullet in row masked by diver (Y<0) seeds [3, 8, 80, 101, 117, 128]'."
+              },
+              {
+                "claim": "BUG: The three-level V encoding mixes up 'strong pull downward' with 'danger above'. Enough targets below push V below -0.9 and turn on the up-veto with no danger present. Together with the wide 6-column danger window, this can stop the surfacing ascent until oxygen runs out.",
+                "refuted": true,
+                "reason": "The mechanism and the vetocheck numbers are confirmed: upVeto has pre-activation -40V-36, so it switches on at V<-0.9, and reward pulls alone can reach that. The link to oxygen deaths overstates the evidence and misreports one seed. (1) The final-state exception is seed 152 (S on, V=-0.90, no upVeto). Seed 145 is not the exception: its last state, in row 1, has upVeto on, which is structural there, with surf1 on. (2) In 7 of the 11 final states with upVeto on (seeds 30, 31, 48, 135, 183, 192, 197), the veto came from real danger within one column of the sub in the row above. Only 3 (seeds 50, 58, 167) were reward-pull false vetoes. (3) Across the final surfacing stretch of the 12 oxygen deaths with divers, 451 of 719 steps were vetoed by nearby danger, 110 by far danger in the wide window, and only 109 by reward pull.",
+                "evidence": "Re-ran vetocheck.py: 'up-veto active in 22.6% … 10.7% of those have no danger'; 'while S on: 4695 steps, up vetoed 3495 (74.4%), falsely 499'. oxy.py: seed 145 'on: [dnDes, upVeto, fireL, recL, S, R01, surf1]'; seed 152 'on: [dnDes, S] V=-0.90'. oxy3.py: 'TOTAL final S-on stretch: S_steps 719, veto_near 451, veto_window_far 110, veto_reward_pull 109, no_veto 49'. Seeds 30, 31, 48, 135, 183 and 197 had 0 reward-pull vetoes. oxy2.py gives the last-state classification."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "game": "seaquest",
+        "attempt": 3,
+        "score": 51.69,
+        "design_summary": "The submarine dives from the surface, moves right to column 9 and steps left once, so it sits at column 8 facing left. After that it moves only up and down, firing left by default. Fire has logit 10; a chosen up, down, left or right move has logit 20 to 22, so the policy is almost deterministic (sampled actions over 200 episodes: fire 81.3%, up 9.0%, down 9.3%). Layer 1 holds 29 feature units:\n- 9 sub-row indicators (S_r).\n- 8 row-attraction scores (R_r). These combine a column-weighted reward channel with a negative trail term, so objects coming toward column 8 score higher than ones moving away.\n- 8 row-danger flags (U_r): any danger cell in columns 6–9 of a row.\n- A 'certainly has a diver' gauge test (HD) and a 'time to surface' gauge test (SURF).\n- Two units for horizontal homing (HR, HL).\nLayer 2 gates each move with the current row's S_r: 8 Up_r units, 8 Down_r units, two relays for horizontal homing, and a BLOCK unit that stops surfacing from row 1 without a confirmed diver. Each Up_r/Down_r unit adds danger in the current row (+50), SURF (+50 up, -30 down) and distance-weighted attraction (8, 5, 3.5, 2.5, 2; downward ×1.25). It subtracts 150 when the destination row's danger flag is on. The design only checks the next row. It has no protection against a sticky action repeating a vertical move into the row beyond, and that gap causes most deaths.",
+        "units": [
+          {
+            "layer": "L1",
+            "units": "0-8 (S_r)",
+            "computes": "Sub is in row r: player channel summed over the 10 cells of row r, weight 6, bias -6. Two sub cells give +6, otherwise -6.",
+            "evidence": "answer.md edits lines 43-52. Every probe in probe.py/probe2.py moves the sub only from its own row."
+          },
+          {
+            "layer": "L1",
+            "units": "9-16 (R_r, rows 1-8)",
+            "computes": "Row attractiveness. Reward weight 7.5+4.5c (col 9: 30), trail weight -4.5c, danger weights [3,3,3,3,3,3,-9,-9,-60,-90], bias -4.5. Row 1 gets an extra +40 on gauge col 8 with bias -44.5.",
+            "evidence": "Pre-activations measured in probe2.py for row 4: approaching diver +7.5 (cols 1-8), receding diver -1.5, approaching fish +10.5 (cols 1-5) and -1.5 (cols 6-7), receding fish +1.5 (cols 0-5), enemy bullet -1.5 (cols 0-5), empty row -4.5. A diver just spawned at col 9 moving left gives +25.5."
+          },
+          {
+            "layer": "L1",
+            "units": "17-24 (U_r, rows 1-8)",
+            "computes": "Any danger-channel cell in cols 6-9 of row r (weight 10, bias -5). The flag ignores direction: an enemy moving away sets it too.",
+            "evidence": "probe2.py section 5: with a fish moving left in row 4, a sub in row 5 goes up toward a row-3 diver when the fish is at cols 0-5, and fires (vetoed) when it is at cols 6-9."
+          },
+          {
+            "layer": "L1",
+            "units": "25 (HD)",
+            "computes": "Gauge col 8 lit and at least one of cols 0-7 dark (weights 120, -12 each, bias -30). This proves a diver is aboard but is off whenever the oxygen and diver bars meet (k+d>=9).",
+            "evidence": "Gauge table in probe2.py section 3: HD is on for d=1 only below oxygen 160 and for d=6 only below 60."
+          },
+          {
+            "layer": "L1",
+            "units": "26 (SURF)",
+            "computes": "Time to surface: diver aboard and oxygen<40 (gauge col 1 dark), or 6 divers and oxygen<60.",
+            "evidence": "probe2.py section 3: SURF is on for d=1..5 only at oxygen<=39 and for d=6 at oxygen<=59, as the reply says."
+          },
+          {
+            "layer": "L1",
+            "units": "27 (HR), 28 (HL)",
+            "computes": "HR: a player cell in cols 0-7, so press right. HL: player at col 9 with no trail at col 9 (sub at col 9 facing right), so press left.",
+            "evidence": "probe.py: from row 0 col 5 the net presses right (p=1.000). At col 9 facing right it presses left (1.000). At col 8 facing right it presses right (1.000). Over 200 episodes the sub is at col 8 on 99.6% of steps."
+          },
+          {
+            "layer": "L2",
+            "units": "0-7 (Up_1..Up_8)",
+            "computes": "Gate S_r (100) plus U_r 25, SURF 25, R weights (above +, current -5, below -×1.25) and U_{r-1} -75. Up_1 also needs HD (100); Up_2 gets HD 22.5.",
+            "evidence": "In the probe2.py section 1 matrix (single approaching diver), the sub moves toward every target row 2-8 and stays when the target is in its own row. Up with SURF fires in row 4; a SURF state with danger in the row above gives fire."
+          },
+          {
+            "layer": "L2",
+            "units": "8 (Down_0), 9-15 (Down_1..Down_7)",
+            "computes": "Down_0: sub in row 0, row 1 safe, homing done, SURF off. Down_r mirrors Up_r, with the veto on U_{r+1}.",
+            "evidence": "probe.py: row 0 col 8 empty gives down 1.000; with an enemy at row 1 col 7 it gives fire 1.000. Two equidistant divers give down (tie-break)."
+          },
+          {
+            "layer": "L2",
+            "units": "16, 17 (relays), 18 (BLOCK)",
+            "computes": "Relays pass HR and HL to the right/left logits. BLOCK (row 1 and HD off) pushes the up logit to about -10 relative to fire.",
+            "evidence": "probe.py: in row 1 with no diver (oxygen 150) the net fires (0.999). In row 1 with oxygen 30 and d=2 it goes up (1.000)."
+          },
+          {
+            "layer": "Output",
+            "units": "logits",
+            "computes": "Fire 10 by default. An active Up gives logit 20 (14 for Up_2, because W3[1,2]=7). An active Down gives 20; right/left give 22. No-op 0.",
+            "evidence": "oxy_trace.py output: up 20.0 or 14.0 against fire 10.0 at the moment of a move. Up 0.0 and down 0.0 otherwise."
+          }
+        ],
+        "implementation_bugs": [
+          {
+            "description": "The reply says R_r gives 'approaching objects +1.5 and receding ones −1.5'. The actual values are different, although every sign is right.",
+            "evidence": "Measured pre-activations: approaching diver +7.5, receding diver -1.5, approaching fish +10.5, receding fish +1.5. Approaching enemies at cols 6-7 come out -1.5, because of the -9 danger weights there, so they are not attractive. The reply only says that danger at cols 8 or 9 cancels the score. thinking.md line 461 shows the col-6 case was intended.",
+            "estimated_effect": "None measurable. tanh saturates, and the ordering approaching > receding and enemy > diver holds."
+          },
+          {
+            "description": "W3[1,2]=7, where the other Up units have 10. This makes the row-2 to row-1 up logit 14 instead of 20, and the reply never mentions it.",
+            "evidence": "answer.md line 222. The oxy_trace.py output shows 'row [2] ... up 14.0' against fire 10.0.",
+            "estimated_effect": "P(up | Up_2 active) is about 0.982 instead of about 1.0. Negligible."
+          },
+          {
+            "description": "This is a design gap, not an arithmetic error. Every move veto checks only the adjacent row. Under sticky actions (p=0.1) a move can be repeated into the row beyond, which was never checked. The reply guards against sticky actions only for surfacing from row 2. The last line of thinking.md notices this for the dive from row 0, calls it 'a small gap', and leaves it unfixed.",
+            "evidence": "sticky_events.py over 200 episodes: 1,999 sticky-forced row changes, 132 of them fatal. 129 of the fatal ones moved into a row whose cols 6-9 held danger at decision time. Adding an in-memory U_{r±2} veto (variants.py guard2) raises the score from 49.84 to 73.18 (SE about 3) on the same seeds.",
+            "estimated_effect": "About -23 points relative to a 2-row check."
+          },
+          {
+            "description": "Also a design gap: the U_r veto ignores direction. Enemies moving left at cols 6-7, which are moving away from a sub at col 8, block entry to that row. While SURF is on, this stalls the climb to the surface.",
+            "evidence": "veto_content.py: in 645 of 1,233 vetoed SURF steps, every danger cell in the row above was moving away from col 8. The most common blockers were enemies moving left at col 6 (318) and col 7 (304).",
+            "estimated_effect": "Most of the 27 oxygen deaths with divers aboard per 200 episodes. Moving SURF earlier alone (surf60) cut oxygen deaths from 35 to 16, but the score went from 49.8 to only 52.5, which is not significant."
+          }
+        ],
+        "failure_modes": [
+          {
+            "description": "Sticky double moves. The policy moves one row and then chooses fire, but the 10% sticky repeat moves it a second row, into a danger cell it had flagged and deliberately avoided.",
+            "evidence": "stats.py, deaths.py, sticky_check.py over 200 episodes: 162 collision deaths (fish 75, enemy sub 51, enemy bullet 36). In 140 of them the final step's action was overridden by sticky actions, although overrides happen on only 1.8% of steps. The commonest last-two-step patterns are (u->u, f->u) 65 and (d->d, f->d) 54. With sticky actions set to 0 the score is 113.26 ± 3.66, against 49.84 ± 2.93.",
+            "frequency": "132 of 200 deaths (66%) were sticky-forced vertical moves; 6.6% of sticky-forced row changes are fatal, and 38.6% are fatal when the destination row's cols 6-9 held danger."
+          },
+          {
+            "description": "Oxygen runs out while divers are aboard. SURF fires only at oxygen<40 (d<6). The climb is then vetoed whenever anything sits in cols 6-9 of the row above, so the sub waits until it suffocates.",
+            "evidence": "oxy_stats2.py: of 35 oxygen deaths, 27 had at least one diver aboard. In their final SURF window the up move was vetoed on 901 of 1,032 steps. Seed 4 trace: SURF came on in row 7 at t166, the sub climbed one row, and U_5 and then U_6 held it there until death at t205.",
+            "frequency": "35 of 200 episodes ended by oxygen (17.5%), against 5 of 200 for Astra. Without sticky actions it is 80 of 200, because longer episodes reach higher spawn rates."
+          },
+          {
+            "description": "Oxygen runs out with no diver aboard (d=0, or the MinAtar diver_count=-1 quirk after a 6-diver surfacing). The sub may not surface, and no diver reached it within 200 steps. Divers in row 1 are deliberately ignored when d=0.",
+            "evidence": "oxy_stats2.py: 8 deaths with 'SURF off at death' and d in {0,-1}. probe2.py section 1: with d=0 and oxygen 150, a row-1 diver never draws the sub from rows 2-8.",
+            "frequency": "8 of 200 episodes"
+          },
+          {
+            "description": "Surfacing with no diver aboard, caused by a sticky 'up' from row 1.",
+            "evidence": "deaths.py: all 3 surface_no_diver deaths were sticky-overridden 'up' in the final step.",
+            "frequency": "3 of 200"
+          },
+          {
+            "description": "Small surfacing bonus. A full load of 6 divers is detectable only once oxygen is below 60, so each 6-diver surfacing pays at most 2 points. The sub also keeps chasing diver rows while carrying 6.",
+            "evidence": "stats.py: bonus 3.88 per episode over 2.13 six-diver surfacings per episode; mean oxygen at surfacing is 41. probe.py: with d=6, oxygen 100 and an approaching diver in row 6, the net goes down (1.000).",
+            "frequency": "Every episode. About 4 of the roughly 50 points come from the bonus."
+          }
+        ],
+        "why_this_score": "The score is kills plus surfacing bonus: 45.95 + 3.88 = 49.83 per episode on seeds 0-199, against 51.69 ± 1.36 over 1,000 episodes. No episode reaches the 10,000-step cap. Every episode ends in death after a mean of 1,241 steps, and the sub kills 3.70 enemies per 100 steps. The weights carry out the reply's design faithfully: every hand-built probe produced the action the design calls for. What limits the score is lifetime:\n- 66% of deaths come from a sticky action repeating a vertical move into a row the policy had correctly flagged as dangerous. The design checks only one row ahead.\n- 17.5% are oxygen deaths. Surfacing starts late (oxygen<40), and the climb is vetoed by direction-blind danger flags in the row above.\nRemoving sticky actions doubles the score to 113.3. Adding a 2-row veto alone raises it to 73.2 on the same 200 seeds. So the score sits near 50 because of one unchecked environment effect, not because of weight errors.",
+        "vs_astra": "The two designs are structurally very close:\n- Both stay in a fixed column facing left. Astra stays at its start column 5 (100% of steps); Claude homes to column 8.\n- Both use row-gated fire/up/down units with diver attraction and a one-row-ahead danger check.\n- Both surface on a gauge test.\n\nThe differences:\n- Astra surfaces at oxygen<60 with any diver (its unit 24 is +1 at oxygen 59 for d≥1); Claude waits for oxygen<40.\n- Astra's diver attraction ignores direction (it goes down even for a diver about to leave); Claude's uses the trail channel.\n- Astra adds a shooting-opportunity term for enemies in cols 0-3.\n- Astra's logits are soft (fire 0.76, up/down about 0.12 each in an empty row); Claude's are nearly deterministic.\n\nBoth suffer the sticky double-move failure about equally. For Astra, 127 of 200 deaths were sticky-forced moves into visible danger, and its no-sticky score is 106.5 against 113.3 for Claude.\n\nMeasured over 200 episodes each:\n- Claude has more oxygen deaths (35 vs 5) and fewer fish deaths (75 vs 104).\n- Claude kills more per step (3.70 vs 3.33 per 100 steps) but lives shorter (1,241 vs 1,432 steps).\n- Claude rescues fewer divers (22.4 vs 30.0) and earns less bonus (3.88 vs 5.99).\n\nThe 1,000-episode gap (51.7 vs 53.1) is about 0.7 standard errors of the difference, assuming Astra's SE is about 1.3, as its 200-episode SE of 2.99 implies. It is not significant. Claude's late, often-vetoed surfacing costs it lifetime, and its higher kill rate makes up for it.",
+        "key_claims": [
+          {
+            "claim": "net.npz is exactly the parse of answer.md's edits block: 175 of 175 statements applied, no errors, and maximum difference 0 for every tensor.",
+            "evidence": "check_net.py output: 'parse: 175 175 []' and 'max diff vs reparse 0.0' for W1, b1, W2, b2, W3, b3."
+          },
+          {
+            "claim": "The traced episode runner reproduces wsp.play_episode exactly, so the death-cause statistics describe the scored policy.",
+            "evidence": "verify_trace.py: seeds 0-7 give identical (score, steps), e.g. seed 1 (132.0, 2767) from both runners."
+          },
+          {
+            "claim": "66% of Claude's deaths (132 of 200) were vertical moves forced by sticky actions into a row whose cols 6-9 already held visible danger, while the policy itself chose a different action.",
+            "evidence": "sticky_events.py: '1999 changed row; fatal: 132; destination row had danger ... 334; fatal among those 129'. sticky_check.py: 140 of 162 collision deaths had a sticky override on the final step."
+          },
+          {
+            "claim": "Sticky actions roughly halve both networks' scores.",
+            "evidence": "counterfactual.py with sticky set to 0 on seeds 0-199: Claude 113.26 ± 3.66 (vs 49.84), Astra 106.46 ± 2.98 (vs 53.71)."
+          },
+          {
+            "claim": "A 2-row lookahead veto, added in memory only, raises Claude's score from 49.84 to 73.18 on the same 200 seeds.",
+            "evidence": "variants.py guard2: 'mean 73.18 se 3.11 steps 1795'."
+          },
+          {
+            "claim": "Oxygen deaths are 17.5% of Claude's episodes, against 2.5% for Astra. In 27 of the 35 the sub had divers aboard but its climb was vetoed on 87% of the final SURF-window steps.",
+            "evidence": "stats.py death causes (oxygen 35 vs 5). oxy_stats2.py: 'up vetoed by U(row above)': 901 of 1,032 final-window steps."
+          },
+          {
+            "claim": "The gauge units match the reply: SURF is on for d=1-5 at oxygen<40 and for d=6 at oxygen<60; HD is off whenever the oxygen and diver bars meet.",
+            "evidence": "probe2.py section 3: the HS pattern appears from oxygen 39 for d=1..5 and from 59 for d=6; at oxygen 160 and above, HD is off for every d."
+          },
+          {
+            "claim": "Claude's design gets more kills per step than Astra's but lives shorter, and the 1,000-episode gap of 1.4 points is not significant.",
+            "evidence": "stats.py: kills per 100 steps 3.70 vs 3.33; mean steps 1,241 vs 1,432. run.json: se 1.36 for Claude over 1,000 episodes."
+          }
+        ],
+        "dir": "/Users/dhaneshneelamana/projects/wsp-replication/runs/cap128k/claude-opus-5-5/seaquest/attempt3",
+        "verification": [
+          {
+            "lens": "rerun",
+            "verdicts": [
+              {
+                "claim": "net.npz is exactly the parse of answer.md's edits block: 175 of 175 statements applied, no errors, and maximum difference 0 for every tensor.",
+                "refuted": false,
+                "reason": "I wrote my own parser, which does not use wsp.apply_edits. It runs line by line, checks each line against a whitelist regex, and fills float64 arrays. It reproduces net.npz exactly. answer.md has a single ```edits fence.",
+                "evidence": "indep/c1_parse.py output: 'my parser: statements 175 applied 175 unparsed []'. max|npz - myparse| = 0.0 for W1, b1, W2, b2, W3, b3, and the nonzero counts match (524/29/190/17/19/5, 784 in total). 'wsp.apply_edits report: 175 175 []'. All scripts are in /private/tmp/claude-501/-Users-dhaneshneelamana-projects-wsp-replication/1de9272e-bb08-4c08-9f63-28011de783b7/scratchpad/analysis/seaquest_attempt3/indep/."
+              },
+              {
+                "claim": "The traced episode runner reproduces wsp.play_episode exactly, so the death-cause statistics describe the scored policy.",
+                "refuted": false,
+                "reason": "I checked far more than seeds 0-7. The analyst's trace pickles match wsp.play_episode on every seed from 0 to 199, for both networks. trace.run also matches on new seeds 600-611. My own runner, which calls the real Environment.act and reads env.last_action instead of re-drawing the sticky choice, matches too. Its death causes agree with the analyst's on all 200 seeds.",
+                "evidence": "indep/c2_compare.py: 'claude seeds 200 analyst-pickle mismatches vs play_episode: 0 ... seed1 official (132.0, 2767) analyst (132.0, 2767)' and 'astra ... mismatches: 0'. Seeds 600-611 are all 'equal'. c3_stats.py: 'cause disagreements with analyst's trace (collision classes merged): 0' for both networks."
+              },
+              {
+                "claim": "66% of Claude's deaths (132 of 200) were vertical moves forced by sticky actions into a row whose cols 6-9 already held visible danger, while the policy itself chose a different action.",
+                "refuted": true,
+                "reason": "The mechanism reproduces, but the number does not fit the wording. In 132 of 200 deaths (66%) the final step was a sticky-forced vertical row change. Only 129 of those (64.5%) went into a row with danger in cols 6-9. The other 3 were sticky up-moves into row 0 with no diver aboard, which ends the game without any visible danger. My replay of each fatal step with the policy's own action survived in all 132 cases, so the sticky override did cause these deaths. The 140-of-162 figure also reproduces.",
+                "evidence": "indep/c3_stats.py (own runner plus deepcopy replay): 'sticky-forced vertical ... 2337, changed row 1999, fatal 132'; 'fatal with dest-row danger in cols 6-9 at decision time: 129'; 'final step = sticky-forced vertical row change: 132 (66.0%) ... policy's own action would have survived that step (replay): 132 ... their causes: {'collision': 129, 'surface_no_diver': 3}; sub col pre-step: {8: 132}'; 'collision deaths with override on final step: 140' of 162."
+              },
+              {
+                "claim": "Sticky actions roughly halve both networks' scores.",
+                "refuted": false,
+                "reason": "I reran both networks on seeds 0-199 with my own runner, building the Environment with sticky_action_prob=0.0 directly. The numbers match the claim exactly. With sticky actions Claude keeps 44% of its no-sticky score (49.84/113.26) and Astra keeps 50% (53.71/106.46), so 'roughly halve' holds.",
+                "evidence": "indep/c_batch.py 0.0: 'claude 0.0 mean 113.26 se 3.66', 'astra 0.0 mean 106.46 se 2.977'. c_batch.py official (wsp.play_episode): 'claude official mean 49.84 se 2.933', 'astra official mean 53.71 se 2.99'."
+              },
+              {
+                "claim": "A 2-row lookahead veto, added in memory only, raises Claude's score from 49.84 to 73.18 on the same 200 seeds.",
+                "refuted": false,
+                "reason": "I built the veto myself. My code reads each move unit's gate row and veto row from W2 instead of using hard-coded indices. It adds a -75 weight from the unit for the row beyond, with a -75 bias shift. The result is identical to the analyst's guard2 weights. Scored with the official wsp.evaluate, the reported numbers reproduce exactly.",
+                "evidence": "indep/c5_guard.py: 13 changed W2 entries; 'identical to analyst's guard2 weights: True'; 'base {'mean': 49.84, 'se': 2.93, ... 'mean_length': 1240.51}'; 'guard2 {'mean': 73.18, 'se': 3.11, ... 'mean_length': 1794.895}'."
+              },
+              {
+                "claim": "Oxygen deaths are 17.5% of Claude's episodes, against 2.5% for Astra. In 27 of the 35 the sub had divers aboard but its climb was vetoed on 87% of the final SURF-window steps.",
+                "refuted": false,
+                "reason": "All counts reproduce. The analyst's 901 counts only vetoed steps where the Down unit was off. Including the 14 steps where Down was also on gives 915/1032 (88.7%). I also ran a counterfactual: with U(row above) forced off, the Up unit turns on in every vetoed step, so the veto is what blocks the climb. Note that 1 of the 8 oxygen deaths with no diver had diver_count -1, a MinAtar quirk after a 6-diver surfacing.",
+                "evidence": "c3_stats.py: Claude 'oxygen deaths 35 (17.5%) ... with d>=1: 27'; Astra 'oxygen deaths 5 (2.5%)'. c6_oxy.py: 'episodes with SURF on at death 27 total window steps 1032'; 'vetoed_by_U_above': 915, 'vetoed_and_cf_up_on': 915. c6b_oxy.py: 'win_veto': 915, 'win_veto_down_on': 14, and 915-14 = 901."
+              },
+              {
+                "claim": "The gauge units match the reply: SURF is on for d=1-5 at oxygen<40 and for d=6 at oxygen<60; HD is off whenever the oxygen and diver bars meet.",
+                "refuted": false,
+                "reason": "I swept every oxygen level from 0 to 200 and every diver count from 0 to 6 through real env states. The set of states where SURF is on is exactly the claimed set. HD is off in every state where the two bars meet, and on in every d>=1 state where they do not. Units 25 and 26 read only gauge row 9, channel 5. This matches the reply's lines 19-22.",
+                "evidence": "indep/c7_gauge.py: 'SURF on set == {d=1..5 & oxy<40} U {d=6 & oxy<60}: True'; 'd=1..5: SURF on for oxygen 0..39', 'd=6: 0..59', 'd=0: None'; 'HD off on every (oxy,d) where bars meet ...: True | #meet states 567'; 'HD on for every d>=1 state where bars do not meet: True'; 'HD at oxygen>=160 for any d: False'."
+              },
+              {
+                "claim": "Claude's design gets more kills per step than Astra's but lives shorter, and the 1,000-episode gap of 1.4 points is not significant.",
+                "refuted": false,
+                "reason": "Kills per step and episode length reproduce with my own kill count (reward minus the 6-diver surfacing bonus). The bootstrap 95% CI for the kill-rate difference excludes 0. One caveat on the gap: 1.4 compares Claude's local 51.69 with Astra's paper-eval 53.11. With the same local harness, Astra scores 54.618 and the gap is 2.93. Either way it is not significant (z 0.74 or 1.53).",
+                "evidence": "c3_stats.py: Claude 'mean steps 1240.5 ... kills per 100 steps 3.705'; Astra 'mean steps 1431.8 ... 3.333'. c8_sig.py: 'diff 95% CI [0.237 0.511]'; 'Astra paper eval: 53.110 (se 1.357) vs Claude 51.690 (se 1.361): gap 1.42, z 0.74'; 'Astra local harness: 54.618 (se 1.352) ... gap 2.93, z 1.53'."
+              },
+              {
+                "claim": "BUG: The reply says R_r gives 'approaching objects +1.5 and receding ones −1.5'. The actual values are different, although every sign is right.",
+                "refuted": false,
+                "reason": "My own probe measured rows 3 and 6, with the sub in row 8. It gives exactly the claimed pre-activations, and approaching enemies at cols 6-7 come out at -1.5. The reply (answer.md line 14) states +1.5/−1.5, so the approaching value is wrong: +7.5, not +1.5. One caveat: the receding-diver value of -1.5 does match the reply, so only half of the stated pair is off. Edge columns also differ: an approaching diver at col 0 is +3.0. thinking.md line 461 confirms the col-6 negative was intended. This is a mismatch in the reply's prose, not in how the network behaves.",
+                "evidence": "indep/c9_rprobe.py, row 3 (cols 0-9): diver approaching '3.0 7.5 ... 7.5 -10.5'; diver receding '-1.5 ... -1.5 39.0 25.5'; fish approaching '6.0 10.5 x5 -1.5 -1.5 -52.5 -100.5'; fish receding '1.5 x6 -10.5 -10.5 ...'; empty row -4.5. thinking.md:461 'the approaching enemy at column 6 ... come out slightly negative and so mark that row as unsafe'."
+              },
+              {
+                "claim": "BUG: W3[1,2]=7, where the other Up units have 10. This makes the row-2 to row-1 up logit 14 instead of 20, and the reply never mentions it.",
+                "refuted": true,
+                "reason": "The facts check out: W3[1,2]=7, the logit is 14 versus 20, and the reply's prose never explains it. But the value is deliberate, not a bug. thinking.md line 325 gives the reason: 'whether the Up_2 unit can carry a smaller weight into the up logit, so that when both up and down are available the down move wins clearly.' It works as intended: when Up_2 and Down_2 are both on, p(down)=0.9975. Setting W3[1,2]=10 does not improve the score (49.37 versus 49.84 on the same 200 seeds). Also, the value does appear in the reply, in the edits block at line 222.",
+                "evidence": "indep/c10_w3.py: 'only Up unit 1 (sub row 2) on: up logit = 14.0 ... fire 10.0', other Up units 20.0; 'Up_2 and Down_2 both on: logits [0 0 14 0 20 10] p(up) 0.0025 p(down) 0.9975'; with SURF on in row 2, p(up) 0.982; 'W3[1,2]=10 variant: {'mean': 49.37, 'se': 3.05, ...}' versus base 49.84."
+              },
+              {
+                "claim": "BUG: This is a design gap, not an arithmetic error. Every move veto checks only the adjacent row. Under sticky actions (p=0.1) a move can be repeated into the row beyond, which was never checked. The reply guards against sticky actions only for surfacing from row 2. The last line of thinking.md notices this for the dive from row 0, calls it 'a small gap', and leaves it unfixed.",
+                "refuted": false,
+                "reason": "I read the vetoes out of W2: each move unit is vetoed only by the U unit of the adjacent row. Up from row 1 has no veto; Down from row 0 checks only row 1. 'sticky' appears once in answer.md, at line 34, about up from row 2 without a diver. thinking.md line 601, the last line, says 'small gap I'm weighing', and Down_0 still checks only row 1. My runner reproduces the event counts. Every fatal case repeats the previous executed vertical move. My independently built 2-row veto reproduces 73.18.",
+                "evidence": "c5_guard.py: 'L2 unit 8: gated on sub row 0, vetoed by danger rows [1]', units 1-7 each vetoed by [r-1] and 9-15 by [r+1]. c3_stats.py: '... changed row 1999, fatal 132'; 'fatal with dest-row danger in cols 6-9 ...: 129'; repeats are f->u 67, f->d 54, u->d 5, d->u 6. c5_guard.py: guard2 mean 73.18, se 3.11."
+              },
+              {
+                "claim": "BUG: Also a design gap: the U_r veto ignores direction. Enemies moving left at cols 6-7, which are moving away from a sub at col 8, block entry to that row. While SURF is on, this stalls the climb to the surface.",
+                "refuted": false,
+                "reason": "The U units read only channel 1 at cols 6-9, with no trail term. I classified blockers by their true direction from the env objects, where the analyst inferred direction from trails. That gives a slightly higher count than the claim: 682 of 1,233 vetoed SURF steps (55%) had only blockers moving away, against the analyst's 645. The analyst's method cannot tell a bullet's direction. Left-moving enemies at col 6 (326) and col 7 (315) are the top blockers, against the analyst's 318 and 304. With U(above) forced off, Up turns on in all 1,233 steps, so the veto does stall the climb. thinking.md lines 117 and 209 show the direction-blind check was a conscious simplification, which fits the claim's 'design gap' label.",
+                "evidence": "indep/c6_oxy.py: 'all SURF-on veto steps: 1233; every blocker in cols 6-9 moving away (ground truth): 682 (55.3%); up unit would turn on if U(above) were off: 1233'. Blockers: fish 6 L 182 + esub 6 L 144; fish 7 L 169 + esub 7 L 146; fish 8 L 152 + esub 8 L 119. c6b_oxy.py: sub at col 8 on 1231 of 1233 veto steps."
+              }
+            ]
+          },
+          {
+            "lens": "text",
+            "verdicts": [
+              {
+                "claim": "net.npz is exactly the parse of answer.md's edits block: 175 of 175 statements applied, no errors, and maximum difference 0 for every tensor.",
+                "refuted": false,
+                "reason": "Confirmed. I re-parsed answer.md with wsp.apply_edits: all 175 statements applied with no errors, and every tensor of net.npz is array-equal to the reparse. answer.md contains exactly one ```edits block.",
+                "evidence": "refute/c1_parse.py printed 'parse: 175 175 []'. For W1, W2, W3, b1, b2 and b3 it printed 'max abs diff 0.0 array_equal True'. It also counted 175 non-comment lines in the edits block. `grep -c '```edits' answer.md` printed 1."
+              },
+              {
+                "claim": "The traced episode runner reproduces wsp.play_episode exactly, so the death-cause statistics describe the scored policy.",
+                "refuted": false,
+                "reason": "Confirmed, and over more seeds than the analyst checked. For seeds 0-199 and both networks, the analyst's trace pickles give the same (score, steps) as wsp.play_episode on every seed. My own separately written replica also matches on every seed. The CAUSE line numbers in trace.py (135/142/161/167/172/179/195/202) are the actual `self.terminal = True` lines in the installed seaquest.py.",
+                "evidence": "refute/rf_batch.py claude_pe and astra_pe, then refute/rf_analyze.py. Output: 'analyst trace pkl vs wsp.play_episode, seeds 0-199: mismatches 0' for both claude and astra, and 'my runner vs wsp.play_episode ... mismatches 0'. The 200-seed means are claude 49.84 (se 2.93) and astra 53.71 (se 2.99). `grep -n 'terminal = True' seaquest.py` gives lines 135,142,161,167,172,179,195,202."
+              },
+              {
+                "claim": "66% of Claude's deaths (132 of 200) were vertical moves forced by sticky actions into a row whose cols 6-9 already held visible danger, while the policy itself chose a different action.",
+                "refuted": true,
+                "reason": "The count is wrong. All 200 episodes ended in death, and 132 of them ended on a step where sticky actions caused a row change the policy had not chosen. But 3 of those 132 were sticky 'up' moves from row 1 into row 0 with no diver aboard (seeds 85, 94, 106, cause surface_no_diver). Row 0 holds no danger. Only 129 of the 132 (64.5% of deaths) moved into a row with danger in cols 6-9. The analyst's own evidence line says 'fatal among those 129', which contradicts the claim's 132. The 140-of-162 sticky_check figure does reproduce.",
+                "evidence": "refute/rf_analyze.py (claude) output: 'changed row: 1999; fatal on that step: 132'; 'fatal & dest row cols 6-9 danger: 129'; 'x0 of fatal events: {8: 132}'; 'total deaths 200'. Cross-check script: 'fatal sticky row-change episodes 132 analyst causes: {fish: 61, enemy_sub: 44, enemy_bullet: 24, surface_no_diver: 3}' and 'dest rows of the non-danger fatal ones: [(85,1,0,2),(94,1,0,2),(106,1,0,2)]'. Also 'analyst collision deaths 162; ... final step a!=aa among them: 140'."
+              },
+              {
+                "claim": "Sticky actions roughly halve both networks' scores.",
+                "refuted": false,
+                "reason": "Confirmed, with my own replica on the same 200 seeds and the same RNG stream; the env.random.rand() call is kept, with probability set to 0. With sticky actions the scores are 49.84 (Claude) and 53.71 (Astra). Without them they are 113.26 and 106.46, ratios of 0.44 and 0.50.",
+                "evidence": "refute/rf_batch.py log: 'claude N 200 mean 49.84 se 2.93', 'astra N 200 mean 53.71 se 2.99', 'claude_sticky0 N 200 mean 113.26 se 3.66', 'astra_sticky0 N 200 mean 106.46 se 2.98'."
+              },
+              {
+                "claim": "A 2-row lookahead veto, added in memory only, raises Claude's score from 49.84 to 73.18 on the same 200 seeds.",
+                "refuted": false,
+                "reason": "Confirmed. I wrote the variant again myself (rf_runner.guard2), and its indices are identical to the analyst's variants.py. It adds a -75 weight from U_{r-2} to Up_r for r=3..8, from U_2 to Down_0, and from U_{r+2} to Down_r for r=1..6, each with bias -75. Only an in-memory copy is changed. On seeds 0-199 it scores 73.18, against 49.84 for the unmodified network.",
+                "evidence": "refute/rf_batch.py log: 'claude_guard2 N 200 mean 73.18 se 3.11' against 'claude N 200 mean 49.84 se 2.93'."
+              },
+              {
+                "claim": "Oxygen deaths are 17.5% of Claude's episodes, against 2.5% for Astra. In 27 of the 35 the sub had divers aboard but its climb was vetoed on 87% of the final SURF-window steps.",
+                "refuted": false,
+                "reason": "Confirmed, with the 87% read as a pooled figure. There are 35 Claude episodes whose final step began with oxygen 0 (17.5%) and 5 for Astra (2.5%). 27 of the 35 had at least 1 diver before the final step. Pooled over their final contiguous SURF-on windows, 901 of 1,032 steps fall in 'Up unit off, Down off, U(row above) on' (87.3%). Per episode the share runs from 0.00 to 1.00, with a median of 0.88, and 25 of the 27 episodes are at 0.75 or above. Caveats: 3 of the 27 (seeds 7, 120, 139) did reach row 0 on the step oxygen ran out, and 'vetoed' is a classification of unit states. A simple oxygen<0 test misses those 3 surfacing-at-zero cases (32 instead of 35), so I classified by pre-step oxygen instead.",
+                "evidence": "refute/rf_oxy.py output: 'episodes whose final step began with oxygen <= 0: 35 ; pre-step divers>=1: 27'; 'final SURF window ... 27 episodes; steps 1032 {up chosen: 114, up vetoed by U(row above): 901, pushed down: 14, up/down tie: 3}'; 'per-episode vetoed share among d>=1: min 0.00 median 0.88 max 1.00'. rf_analyze.py (astra): 'oxygen deaths 5 share 0.025'."
+              },
+              {
+                "claim": "The gauge units match the reply: SURF is on for d=1-5 at oxygen<40 and for d=6 at oxygen<60; HD is off whenever the oxygen and diver bars meet.",
+                "refuted": false,
+                "reason": "Confirmed by an exhaustive check, not just the analyst's sampled grid. I tested every oxygen value 0-200 and every diver count -1..6. SURF's sign equals '(1<=d<=5 and oxy<40) or (d==6 and oxy<60)' in every state. HD is off in all 546 states where the bars meet. HD equals the reply's rule ('gauge col 8 lit and some col 0-7 dark', answer.md line 19) in every state. The analyst's probe2.py also reproduces: HS from oxygen 39 for d=1..5, from 59 for d=6, and '--' at oxygen 160 and above.",
+                "evidence": "refute/rf_probe.py output: 'SURF sign != (...) over d=-1..6, oxy=0..200: 0 []'; 'states where bars meet: 546 of which HD on: 0'; 'HD sign != reply rule ...: 0 []'. probe2.py section 3 table rerun matches the claim. answer.md lines 19-22 state these rules."
+              },
+              {
+                "claim": "Claude's design gets more kills per step than Astra's but lives shorter, and the 1,000-episode gap of 1.4 points is not significant.",
+                "refuted": false,
+                "reason": "Confirmed. Over seeds 0-199, kills per 100 steps are 3.705 (Claude) and 3.333 (Astra), and mean episode lengths are 1240.5 and 1431.8 steps. Over 1,000 episodes Claude scores 51.69 (se 1.361) and Astra 53.11 (se 1.357, taken from the logs' eval JSON, which the analyst did not cite). The gap is 1.42; the SE of the difference is 1.92, so z = 0.74, which is not significant. The 1,000-episode mean lengths also agree: 1273.975 vs 1411.613.",
+                "evidence": "refute/rf_analyze.py: claude 'kills per 100 steps 3.705 mean steps 1240.5'; astra 'kills per 100 steps 3.333 mean steps 1431.8'. run.json: mean 51.69, se 1.3612, mean_length 1273.975. lm_understand-logs/.../eval/minatar_eval.json: seaquest/hand mean 53.11, se 1.3574, mean_length 1411.613. Computed z = 0.7387."
+              },
+              {
+                "claim": "BUG: The reply says R_r gives 'approaching objects +1.5 and receding ones −1.5'. The actual values are different, although every sign is right.",
+                "refuted": true,
+                "reason": "The quote (answer.md line 14) and the measured values in the evidence are accurate, but 'every sign is right' is false, and 'the actual values are different' is only partly true. Measured R pre-activations by column contradict the reply's signs in several cases. A receding diver at col 8 scores +39.0, yet the reply says receding divers are not attractive. Approaching fish at cols 6-7 score -1.5 (the claim's own evidence), yet the reply says approaching enemies are attractive. Receding fish at cols 6-7 score -10.5, yet the reply says receding enemies stay attractive. An approaching diver at col 9 scores -10.5. Separately, receding divers at cols 0-7 score exactly -1.5, which matches the reply. The claim's other sub-points are accurate: the -9 danger weights at cols 6-7, the reply naming only cols 8-9 (line 17), and thinking.md line 461 on the col-6 case.",
+                "evidence": "probe2.py section 2 rerun: 'diver moving left (receding) -1.5 ×8, 39.0 (col 8), 25.5 (col 9)'; 'fish moving right (approaching) 6.0, 10.5 ×5, -1.5, -1.5, -52.5, -100.5'; 'fish moving left (receding) 1.5 ×6, -10.5, -10.5, -21.0, -64.5'; 'diver moving right ... -10.5' at col 9. answer.md lines 14-17. thinking.md line 461."
+              },
+              {
+                "claim": "BUG: W3[1,2]=7, where the other Up units have 10. This makes the row-2 to row-1 up logit 14 instead of 20, and the reply never mentions it.",
+                "refuted": true,
+                "reason": "The numbers are correct but the BUG label is wrong. W3[0:8,2] is [10,7,10,...], and the up logit with SURF on is 14.00 at row 2 against 20.00 at rows 1 and 3-8. The answer text does not mention the reduced weight; it says 'A chosen move gets logit about 20'. However, thinking.md line 325 records the choice as deliberate: 'checking whether the Up_2 unit can carry a smaller weight into the up logit, so that when both up and down are available the down move wins clearly.' With Up_2 and Down_2 both on, up is 14 and down is 20, which is the stated intent. Calling it a bug goes beyond the evidence.",
+                "evidence": "answer.md line 222 'W3[1, 2] = 7'. refute/rf_probe.py: 'W3[0:8,2] = [10. 7. 10. 10. 10. 10. 10. 10.]', 'row 2: up 14.00 fire 10.00', 'row 3: up 20.00 fire 10.00'. thinking.md line 325 quoted above. answer.md line 38."
+              },
+              {
+                "claim": "BUG: This is a design gap, not an arithmetic error. Every move veto checks only the adjacent row. Under sticky actions (p=0.1) a move can be repeated into the row beyond, which was never checked. The reply guards against sticky actions only for surfacing from row 2. The last line of thinking.md notices this for the dive from row 0, calls it 'a small gap', and leaves it unfixed.",
+                "refuted": false,
+                "reason": "Confirmed. In W2, each Up_r and Down_r reads only its own row's U unit (+25) and the adjacent row's U unit (-75). Down_0 reads only U_1, and W2[18,8] = 0, so it was left unfixed. The only mention of sticky actions in answer.md is line 34, about moving up from row 2 without a diver. The last line of thinking.md (601) reads 'after a dive from row 0, the down move could carry the sub into row 2 without rechecking that row, which is a small gap I'm weighing.' My replica reproduces the evidence counts: 1,999 sticky row changes, 132 fatal, and 129 of the fatal ones into a row with danger in cols 6-9 (all at x0=8). The guard2 variant reproduces 73.18 against 49.84.",
+                "evidence": "refute/rf_probe.py: per-unit U weights, e.g. 'Up_3 {18: -75, 19: 25}', 'Down_0 {17: -75}', 'W2[18,8] (Down_0 <- U_2): 0.0'. `grep -n -i sticky answer.md` returns only line 34. `tail thinking.md` gives the last line quoted above. rf_analyze.py: 'changed row: 1999; fatal on that step: 132', 'fatal & dest row cols 6-9 danger: 129'. rf_batch.log: 'claude_guard2 ... mean 73.18 se 3.11'."
+              },
+              {
+                "claim": "BUG: Also a design gap: the U_r veto ignores direction. Enemies moving left at cols 6-7, which are moving away from a sub at col 8, block entry to that row. While SURF is on, this stalls the climb to the surface.",
+                "refuted": false,
+                "reason": "Confirmed in substance; the analyst's counts are conservative. Each U unit (17-24) reads only danger channel 1 at cols 6-9 of its row (weight 10, bias -5), with no trail input, so it cannot see direction. I reran veto_content.py and it reproduces exactly 645 of 1,233, with col 6 L at 318 and col 7 L at 304. I then reclassified using the true object directions from the env state instead of trail inference. In 682 of the 1,233 vetoed SURF steps every danger cell was moving away from col 8. The top blockers are enemies moving left at col 6 (326) and col 7 (315), and the sub was at col 8 in 1,231 of 1,233 steps. Note that thinking.md line 209 shows the direction-blind check was a deliberate simplification, not an oversight.",
+                "evidence": "refute W1 listing: 'U unit 17 inputs: (1,6,1,10),(1,7,1,10),(1,8,1,10),(1,9,1,10) b1 -5' and the same pattern for units 18-24. veto_content.py rerun: 'veto steps: 1233 ... moving away from col 8: 645', ('enemy',6,'L') 318, ('enemy',7,'L') 304. refute/rf_oxy.py: 'veto steps ... 1233 all danger cells moving away from col 8: 682', 'sub column during veto steps: {8: 1231, 7: 1, 9: 1}', ('enemy',6,'L') 326, ('enemy',7,'L') 315."
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "syntheses": [
+      {
+        "game": "seaquest",
+        "headline": "Claude's three one-shot Seaquest networks scored 7.41, 7.45 and 51.69 (1,000 episodes each). For reference: zero-weight floor 0.1, PPO 100M 5.6, PPO 500M 88.9, Astra (GPT-6) 53.1. Attempts 1 and 2 are turrets parked mid-screen that turn to face enemies, and they survive only about 300 to 350 steps. Attempt 3 parks at column 8 facing left and moves only up and down, which is the same plan as Astra's net. It survives about 1,240 steps and finishes 1.4 points behind Astra, a gap that is not statistically significant (z about 0.74). All three beat PPO 100M; none reaches PPO 500M.",
+        "why_attempts_differ": "The weights are not the problem. Each net.npz is exactly its reply's edits block (228, 204 and 175 statements, max diff 0.0), and both checkers confirmed this for every attempt. The score gap comes from the design each reply chose.\n\nSame-seed rollouts (my rollouts.py, seeds 0-199; the replica matches wsp.play_episode on seeds 0-2):\n- Attempt 1: mean 8.03, mean length 350.5 steps. Left/right executed 13.06 times per episode. The sub's front is at column 5 or 6 on 90.6% of steps in rows 1 and below.\n- Attempt 2: mean 8.34, length 302.4. Left/right executed 37.45 times per episode (12.4% of steps). Columns 4-5 on 83.4% of steps.\n- Attempt 3: mean 49.84, length 1,240.5. Left/right executed 5.74 times per episode (0.46% of steps). Column 8 on at least 99.95% of steps in rows 1-8.\n\n**Attempts 1 and 2 are turrets.**\n- Attempt 1's reply says: \"The submarine stays parked in columns 5–6. It never steers horizontally except to turn\" (answer.md line 5).\n- Attempt 2's reply says: \"The sub keeps near the centre columns (4–5)... turns to face an enemy in its own row, and fires\" (line 5).\n\nBoth read facing and target side through linear windows fixed to absolute columns. Those windows share input channels with enemy trails and divers. Both designs also depend on this horizontal logic: masking left/right in memory drops attempt 1 from 8.03 to 2.36 and attempt 2 from 8.34 to 3.98 (my mask_lr.py). So neither can be turned into a fixed-column design by deleting the turns.\n\nAttempt 1's verified failures:\n1. The surfacing climb has no hazard term. In 66 of 200 deaths the policy chose up during a surfacing request and hit an enemy, the largest single death class. An oracle that replaces those climbs with fire scores 10.93 against 8.03.\n2. The turn detector reads foreign trails as the sub's own back cell. A lone trail at column 7 gives right with p=1.0. Removing foreign trails switches the turn unit off in 206 of 415 turn-driven shifts.\n3. The turn detector also counts divers. In 342 of 349 missed turns a diver was on the facing side, and removing the divers fixes 336 of them. But zeroing divers in the turn sum scored 7.06 against 8.03, so no single fix rescues the design.\n\nAttempt 2's verified failures:\n1. The facing unit O is correct only when the sub occupies cells (3,4), (4,5) or (5,6). One column further out its sign inverts, and beyond that it reads 0.\n2. The side term D steers toward divers. 645 of 763 exits from the central window were diver steps.\n3. The step units then walk into enemies, causing 51 of 181 collisions.\n4. Off-centre steps were 8.0% of play but carried 88 of 181 collisions (1.825 vs 0.167 per 100 steps).\n\nFixing these in memory helps but stays far below attempt 3: no diver steering 14.16, true facing 11.14, both 20.31, plus a true bullet detector 21.86.\n\n**Attempt 3 uses a fixed column.** Its reply says: \"The submarine parks at column 8, facing left, and fires along its row. It moves only up and down\" (line 3). Line 6 adds: \"Every threat to a sub at column 8 shows up in columns 6–9 of its row. That makes danger checks fixed cell lookups.\" With the sub pinned, every column-specific weight stays aligned with its true position, so the absolute-column failures above cannot happen. It also kills faster: 3.705 per 100 steps, against 2.09 for attempt 1.\n\nIts remaining losses:\n- **Sticky double moves.** Its vetoes check only the adjacent row. In 200 episodes there were 1,999 sticky-forced row changes; 132 were fatal, 129 of them into a row whose columns 6-9 already showed danger. Adding a 2-row veto raises the score to 73.18 (from 49.84), and turning sticky actions off gives 113.26.\n- **Late, direction-blind surfacing.** 35 of 200 episodes end in oxygen deaths, 27 of them with divers aboard. Pooled over those 27 episodes, the climb was vetoed on 901 of 1,032 final surfacing-window steps.\n\nIn short, the 7× gap is about survival. The turrets die every 300 steps or so because their horizontal logic misfires. Attempt 3 never relies on horizontal logic after the initial homing.",
+        "vs_astra": "Astra's published score is 53.11 (se 1.357, 1,000 episodes). The same net scores 54.618 (se 1.352) in the local harness.\n\n**Attempt 3 vs Astra: the same plan in a different column.**\n- Astra never samples left or right, and its sub sat at column 5 facing left on all 286,353 steps of 200 episodes (attempt-2 checkers). Attempt 3 sits at column 8 facing left.\n- The 1,000-episode gap is 51.69 vs 53.11, or 1.42 points, z 0.74. Against the local 54.618 the z is 1.53. Neither is significant.\n- Attempt 3 kills faster: 3.705 vs 3.333 per 100 steps (bootstrap 95% CI of the difference [0.237, 0.511]).\n- It lives shorter: 1,240.5 vs 1,431.8 steps on seeds 0-199.\n- It has more oxygen deaths: 35 vs 5 per 200 episodes. One verified reason is that it surfaces later. My surf_threshold.py: attempt 3 with 1-3 divers gives p(up)=1.00 at oxygen 39 and 0.00 at 41, while Astra goes up at 59 (1.00) and drops to its 0.12 baseline at 61, for any diver count. The other reason is that attempt 3's climb is blocked by danger flags that ignore direction: in 645 to 682 of 1,233 vetoed surfacing steps, every blocker was moving away from the sub.\n- Both nets lose about half their score to sticky actions. With sticky off: attempt 3 113.26, Astra 106.46.\n\n**Attempts 1-2 vs Astra: the gap is mostly survival.**\n- Episode lengths are 1,431.8 for Astra against 350.5 and 302.4.\n- Attempt 2's policy-caused collision hazard is 0.250 per 100 steps against Astra's 0.019 (13×). The sticky-caused hazard is about the same (0.050 vs 0.047).\n- Astra also scores faster overall: 0.0375 vs 0.0276 points per step against attempt 2, and 3.33 vs 2.09 kills per 100 steps against attempt 1.\n- In the first 300 steps the rates are close: 0.0261 (attempt 2) vs 0.0241 (Astra) points per step, and 2.07 (attempt 1) vs 2.29 (Astra) kills per 100. So most of Astra's rate advantage comes from later phases that the turrets never reach.\n- One checker split the 45.7-point gap between attempt 1 and Astra as about 64% episode length, 24% kill rate and 12% six-diver bonus.\n\nAstra never moves horizontally and dodges vertically instead. A threat within about 2 columns on its right, or a bullet in its row, gives up/down 0.50/0.50. A fish on its left gives fire 1.00.",
+        "best_attempt_units_for_demo": "Attempt 3 (51.69). Sources: the reply's edits and my probe script /private/tmp/claude-501/-Users-dhaneshneelamana-projects-wsp-replication/1de9272e-bb08-4c08-9f63-28011de783b7/scratchpad/analysis/seaquest_attempt3_synth/demo_probe.py. Each probe state is built by setting MinAtar fields and reading the observation through wsp.make_obs_fn. Unless noted, the sub is in row 4 at column 8 facing left, oxygen 150, no divers.\n\n[0:00] **The plan.** In the reply's own words: \"The submarine parks at column 8, facing left, and fires along its row. It moves only up and down.\" The net uses 29 layer-1 units and 19 layer-2 units, written in 175 edit lines.\n\n[0:15] **Output.** Fire has bias 10. Each layer-2 move unit adds +20 to its action when on; the horizontal relays add +22. In an empty row the logits are up 2.3, down 2.4, fire 10, so fire wins at 0.999. In play, fire is 81% of sampled actions.\n\n[0:25] **Homing.** Units HR (27) and HL (28) feed the left/right relays, and Down_0 handles the dive.\n- Start at row 0, column 5: HR switches on, right p=1.000.\n- Overshoot to column 9 facing right: HL switches on, left p=1.000.\n- At column 8 facing left: Down_0, down p=1.000.\n- With a fish at row 1, column 7: the row-1 danger flag U1 vetoes the dive, fire p=1.000.\n- Result: over 200 episodes the sub is at column 8 on at least 99.95% of steps in rows 1-8.\n\n[0:40] **Which row am I in?** Units S_r (0-8) put weight 6 on each player cell with bias −6, so only the sub's own row reads +1. Each Up_r/Down_r unit gets +100 from its row's S_r, so only the current row's pair can act.\n\n[0:50] **What's worth chasing?** Units R_r (9-16) weight the reward channel by 7.5+4.5·col and the trail channel by −4.5·col, with bias −4.5. That makes direction matter. Measured pre-activations: approaching diver +7.5, receding diver −1.5, approaching fish +10.5.\n- A diver approaching in row 6: down 1.000.\n- The same diver receding: fire 0.997.\n- A diver approaching in row 2: up 1.000.\n- A target in the sub's own row cancels the move. A fish in row 4 at column 3 gives fire 1.000: stay and shoot.\n\n[1:10] **What's dangerous?** Units U_r (17-24) flag any danger cell in columns 6-9 of a row.\n- Danger in the sub's own row adds +50 to both up and down, so the sub leaves the row 50/50. A fish behind at column 9, or a bullet at column 6, gives up 0.500 / down 0.500.\n- Danger in a neighbouring row is a −150 veto. A diver in row 3 plus a fish at row 3, column 7 gives fire 1.000.\n\n[1:25] **Oxygen.** Units HD (25) and SURF (26) and the layer-2 BLOCK unit. SURF reads only gauge cells. It is on with 1-5 divers below oxygen 40, and with 6 divers below 60; both checkers confirmed this by sweeping every oxygen level and diver count.\n- Oxygen 30, 2 divers: up 1.000.\n- Oxygen 45, 2 divers: fire 0.999.\n- 6 divers, oxygen 50: up 1.000.\n- A fish moving away at row 3, column 6 still vetoes the climb (fire 1.000). This direction-blind veto is the cause of the oxygen deaths.\n- BLOCK stops a surfacing from row 1 without a confirmed diver: the up logit drops to −20 and fire wins at 0.999.\n\n[1:40] **The flaw.** Vetoes look only one row ahead. With a diver approaching in row 3 and a fish at row 2, column 7, U2 is on but Up_4 never reads it, so the sub goes up with p=1.000. A 10% sticky repeat of that move then carries it into row 2.\n- Over 200 episodes there were 1,999 sticky-forced row changes; 132 were fatal, and 129 of those went into a row that already showed danger in columns 6-9.\n- Adding the missing 2-row veto in memory raises the score to 73.18, against 49.84. Turning sticky actions off gives 113.26.\n- The reply's reasoning ends on exactly this gap: \"after a dive from row 0, the down move could carry the sub into row 2 without rechecking that row, which is a small gap I'm weighing.\"",
+        "claims_dropped": [
+          "A1: 'Vertical, hold/dodge, surfacing and centering logic behave as the reply states.' Refuted by the text checker. With SURF on, the sub climbs into a fish directly above it (up p=1.0), which contradicts the reply's 'Not moving into danger'. The dodge steps into danger below 16% of the time. At cells 7-8 an own-row bullet produces left instead of a dodge.",
+          "A1: 'Left/right presses cause 83 of 200 deaths'. Refuted by the text checker as an association, not a cause. Executing fire instead at the fatal step, 17 of the 83 still die on that step and 31 more within 5 steps. The rerun checker also found fire or no-op would have survived only 67 of 85. The other half of that claim (masking left/right gives 2.36) is kept, because I reran it myself in mask_lr.py.",
+          "A1 BUG: 'facing is read with the wrong sign off cols 5-6; centering is gated off while anything is in the row; 261 of 707 shifts began off-centre'. Refuted by the text checker. Facing is read correctly at cells 4-5 and 6-7 and is wrong only at 3-4 and 7-8 (11% of off-centre steps). A bullet turns centering on. The off-centre count is 315, not 261.",
+          "A2: 'Episodes end by collision in 90.5%...; all no-diver surfacings are double sticky repeats'. Refuted by both checkers: in seed 191 the first up was sampled by the policy, so only 4 of 5 are double sticky.",
+          "A2: 'Steering toward divers is what takes the sub off-centre, and off-centre play is where it dies'. Refuted by the text checker: 93 of 181 collisions happen centred. Only the higher off-centre hazard (88 of 181 collisions in 8% of steps) is kept.",
+          "A2: 'The gap to Astra is survival, not scoring rate'. Refuted by the text checker: Astra scores 0.0375 vs 0.0276 points per step (36% higher). At Claude's rate over Astra's episode length the score would be about 39.5, not 53.7.",
+          "A2 BUG: 'the reply states flatly that O = 2·(front − back) and the off-window failure is not acknowledged'. Refuted by the text checker: the reply names the cols 3-6 window, and thinking.md lines 465 and 541 acknowledge the off-window risk. The technical pattern itself is kept through the unrefuted O_k key claim.",
+          "A2 BUG: 'the V encoding... can stop the surfacing ascent until oxygen runs out'. Refuted by the text checker. Seed 145 was misreported as the exception; the real exception is seed 152. 7 of 11 final up-vetoes came from real nearby danger, and reward pull caused only 109 of 719 final-stretch vetoes.",
+          "A3: '66% of deaths (132 of 200) were sticky-forced vertical moves into a row whose cols 6-9 already held visible danger'. Refuted by both checkers: 132 deaths followed sticky-forced row changes, but only 129 went into visible danger. The other 3 were sticky ups into row 0 with no diver aboard. I use 132 fatal and 129 into danger, as stated in the unrefuted design-gap claim.",
+          "A3 BUG: 'R_r values differ from the reply's +1.5/−1.5 although every sign is right'. Refuted by the text checker. A receding diver at col 8 scores +39.0, approaching fish at cols 6-7 score −1.5, and receding fish at cols 6-7 score −10.5. Only the measured interior values I probed myself (+7.5, −1.5, +10.5) are used.",
+          "A3 BUG: 'W3[1,2]=7 makes the row-2 up logit 14 and the reply never mentions it'. Refuted by both checkers as deliberate. thinking.md line 325 explains it as a way to make down win ties with up from row 2, and setting it to 10 scores 49.37 against 49.84."
+        ],
+        "caveats": [
+          "Most mechanism statistics come from seeds 0-199 (200 episodes), not the scored 1,000-episode set. On seeds 0-199 the scores are 8.03, 8.34, 49.84 and Astra 53.71; the official scores are 7.41, 7.45, 51.69 and Astra 53.11.",
+          "Claude's official scores come from this replication harness (run.json). Astra's 53.11 comes from the logs' eval JSON. Running Astra's net in the local harness gives 54.618, which moves the attempt-3 gap from 1.42 (z 0.74) to 2.93 (z 1.53). Neither is significant.",
+          "The counterfactuals (safe-surface oracle 10.93, true-facing 11.14, no diver steering 14.16, 2-row veto 73.18, sticky off 113.26, my left/right masks 2.36 and 3.98) change networks or the environment in memory only. They measure how much a mechanism matters, not what Claude would have written.",
+          "Death-class counts depend on each analyst's classifier, and the checkers found small definitional differences: same-row deaths 23 vs 29 for Astra and 98 vs 102 for attempt 1; receding blockers 645 vs 682. Ranges are given where they differ.",
+          "Three attempts is a small sample. One of the three found the fixed-column plan, which says nothing reliable about how often Claude would.",
+          "The demo probes are hand-built states (MinAtar fields set directly, with fixed object timers), not states recorded during play.",
+          "Attempt 3 executes left or right 5.74 times per episode. I did not check where those presses happen. I only verified that the sub is at column 8 on at least 99.95% of steps in rows 1-8 (the column share rounds to 1.000).",
+          "Scripts and outputs are in /private/tmp/claude-501/-Users-dhaneshneelamana-projects-wsp-replication/1de9272e-bb08-4c08-9f63-28011de783b7/scratchpad/analysis/seaquest_attempt3_synth/ (demo_probe.py, rollouts.py and rollouts.out, mask_lr.py and mask_lr.out, surf_threshold.py)."
+        ]
+      }
+    ]
+  },
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Explain"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 2,
+      "title": "Verify"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 3,
+      "title": "Synthesize"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "explain:seaquest#1",
+      "phaseIndex": 1,
+      "phaseTitle": "Explain",
+      "agentId": "ac46b4ce2f23c89ec",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1793975701960,
+      "queuedAt": 1793975701931,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "seaquest",
+      "promptPreview": "Context: replication of \"Sparks of Weight-Space Programming\" Experiment 5. Claude Opus 5.5 was given the paper's prompt\n(/Users/dhaneshneelamana/lm_understand-logs/exp5_write_from_scratch/runs/<game>/reply/prompt.txt: game rules, the MinAtar 1.0.15 game source, the 6-channel 10x10 input, the\n600->32->32->6 tanh network, and an \"edits\" language) and wrote every weight in one reply, with no tools, n…",
+      "promptFramed": true,
+      "lastProgressAt": 1793976506449,
+      "tokens": 166325,
+      "toolCalls": 31,
+      "durationMs": 804488,
+      "resultPreview": "{\"game\":\"seaquest\",\"attempt\":1,\"score\":7.414,\"design_summary\":\"Claude's reply parks the submarine on columns 5–6 and makes fire the default action (fire logit 0, every other action −13 or lower when no layer-2 unit is on). Layer 1 is almost entirely \\\"row-gated\\\" units: each gets 15 per sub cell in its row against a bias of about −30, so only the unit for the sub's current row is off saturation. T…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 2,
+      "label": "explain:seaquest#2",
+      "phaseIndex": 1,
+      "phaseTitle": "Explain",
+      "agentId": "a5d4683bc72c33180",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1793975701960,
+      "queuedAt": 1793975701931,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "seaquest",
+      "promptPreview": "Context: replication of \"Sparks of Weight-Space Programming\" Experiment 5. Claude Opus 5.5 was given the paper's prompt\n(/Users/dhaneshneelamana/lm_understand-logs/exp5_write_from_scratch/runs/<game>/reply/prompt.txt: game rules, the MinAtar 1.0.15 game source, the 6-channel 10x10 input, the\n600->32->32->6 tanh network, and an \"edits\" language) and wrote every weight in one reply, with no tools, n…",
+      "promptFramed": true,
+      "lastProgressAt": 1793976616217,
+      "tokens": 181626,
+      "toolCalls": 36,
+      "durationMs": 914254,
+      "resultPreview": "{\"game\":\"seaquest\",\"attempt\":2,\"score\":7.451,\"design_summary\":\"Claude built a turret that tries to stay in the centre columns (4-5), turns to face an enemy in its own row and fires, and moves up or down toward rows that hold targets. The first layer has 4 groups of 7 units, one unit per player row 2-8 (weight 10 on each player cell, bias -20, so only the active row's unit is off -1). The groups ar…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 3,
+      "label": "explain:seaquest#3",
+      "phaseIndex": 1,
+      "phaseTitle": "Explain",
+      "agentId": "a282663b7a1eb21d7",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1793975701960,
+      "queuedAt": 1793975701932,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "seaquest",
+      "promptPreview": "Context: replication of \"Sparks of Weight-Space Programming\" Experiment 5. Claude Opus 5.5 was given the paper's prompt\n(/Users/dhaneshneelamana/lm_understand-logs/exp5_write_from_scratch/runs/<game>/reply/prompt.txt: game rules, the MinAtar 1.0.15 game source, the 6-channel 10x10 input, the\n600->32->32->6 tanh network, and an \"edits\" language) and wrote every weight in one reply, with no tools, n…",
+      "promptFramed": true,
+      "lastProgressAt": 1793976499939,
+      "tokens": 163964,
+      "toolCalls": 30,
+      "durationMs": 797975,
+      "resultPreview": "{\"game\":\"seaquest\",\"attempt\":3,\"score\":51.69,\"design_summary\":\"The submarine dives from the surface, moves right to column 9 and steps left once, so it sits at column 8 facing left. After that it moves only up and down, firing left by default. Fire has logit 10; a chosen up, down, left or right move has logit 20 to 22, so the policy is almost deterministic (sampled actions over 200 episodes: fire …"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 4,
+      "label": "verify:seaquest#3:rerun",
+      "phaseIndex": 2,
+      "phaseTitle": "Verify",
+      "agentId": "ab863c974e208ae0a",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1793976501994,
+      "queuedAt": 1793976501980,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "Context: replication of \"Sparks of Weight-Space Programming\" Experiment 5. Claude Opus 5.5 was given the paper's prompt\n(/Users/dhaneshneelamana/lm_understand-logs/exp5_write_from_scratch/runs/<game>/reply/prompt.txt: game rules, the MinAtar 1.0.15 game source, the 6-channel 10x10 input, the\n600->32->32->6 tanh network, and an \"edits\" language) and wrote every weight in one reply, with no tools, n…",
+      "promptFramed": true,
+      "lastProgressAt": 1793977529807,
+      "tokens": 166974,
+      "toolCalls": 49,
+      "durationMs": 1027812,
+      "resultPreview": "{\"verdicts\":[{\"claim\":\"net.npz is exactly the parse of answer.md's edits block: 175 of 175 statements applied, no errors, and maximum difference 0 for every tensor.\",\"refuted\":false,\"reason\":\"I wrote my own parser, which does not use wsp.apply_edits. It runs line by line, checks each line against a whitelist regex, and fills float64 arrays. It reproduces net.npz exactly. answer.md has a single ```…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 5,
+      "label": "verify:seaquest#3:text",
+      "phaseIndex": 2,
+      "phaseTitle": "Verify",
+      "agentId": "a10d89ceb625cc0d4",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1793976501995,
+      "queuedAt": 1793976501980,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "Context: replication of \"Sparks of Weight-Space Programming\" Experiment 5. Claude Opus 5.5 was given the paper's prompt\n(/Users/dhaneshneelamana/lm_understand-logs/exp5_write_from_scratch/runs/<game>/reply/prompt.txt: game rules, the MinAtar 1.0.15 game source, the 6-channel 10x10 input, the\n600->32->32->6 tanh network, and an \"edits\" language) and wrote every weight in one reply, with no tools, n…",
+      "promptFramed": true,
+      "lastProgressAt": 1793977183783,
+      "tokens": 159837,
+      "toolCalls": 36,
+      "durationMs": 681787,
+      "resultPreview": "{\"verdicts\":[{\"claim\":\"net.npz is exactly the parse of answer.md's edits block: 175 of 175 statements applied, no errors, and maximum difference 0 for every tensor.\",\"refuted\":false,\"reason\":\"Confirmed. I re-parsed answer.md with wsp.apply_edits: all 175 statements applied with no errors, and every tensor of net.npz is array-equal to the reparse. answer.md contains exactly one ```edits block.\",\"ev…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 6,
+      "label": "verify:seaquest#1:rerun",
+      "phaseIndex": 2,
+      "phaseTitle": "Verify",
+      "agentId": "a9efff350327b047e",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1793976508694,
+      "queuedAt": 1793976508692,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "Context: replication of \"Sparks of Weight-Space Programming\" Experiment 5. Claude Opus 5.5 was given the paper's prompt\n(/Users/dhaneshneelamana/lm_understand-logs/exp5_write_from_scratch/runs/<game>/reply/prompt.txt: game rules, the MinAtar 1.0.15 game source, the 6-channel 10x10 input, the\n600->32->32->6 tanh network, and an \"edits\" language) and wrote every weight in one reply, with no tools, n…",
+      "promptFramed": true,
+      "lastProgressAt": 1793977298551,
+      "tokens": 155413,
+      "toolCalls": 33,
+      "durationMs": 789857,
+      "resultPreview": "{\"verdicts\":[{\"claim\":\"The scored net.npz is exactly the reply's edits applied to a zero net.\",\"refuted\":false,\"reason\":\"I rebuilt the network a different way: each line of the last edits block in answer.md was run as plain numpy code on zero arrays, without wsp.apply_edits. All 228 statements ran and every array matches net.npz exactly.\",\"evidence\":\"refute_indep/c1_exec_edits.py: 'statements exec…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 7,
+      "label": "verify:seaquest#1:text",
+      "phaseIndex": 2,
+      "phaseTitle": "Verify",
+      "agentId": "a26efc0d94027a48b",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1793976508694,
+      "queuedAt": 1793976508692,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "Context: replication of \"Sparks of Weight-Space Programming\" Experiment 5. Claude Opus 5.5 was given the paper's prompt\n(/Users/dhaneshneelamana/lm_understand-logs/exp5_write_from_scratch/runs/<game>/reply/prompt.txt: game rules, the MinAtar 1.0.15 game source, the 6-channel 10x10 input, the\n600->32->32->6 tanh network, and an \"edits\" language) and wrote every weight in one reply, with no tools, n…",
+      "promptFramed": true,
+      "lastProgressAt": 1793977363518,
+      "tokens": 171020,
+      "toolCalls": 35,
+      "durationMs": 854823,
+      "resultPreview": "{\"verdicts\":[{\"claim\":\"The scored net.npz is exactly the reply's edits applied to a zero net.\",\"refuted\":false,\"reason\":\"Confirmed. I reran wsp.apply_edits on answer.md, which has exactly one ```edits block, starting from the default zero net. Every parameter matches net.npz exactly.\",\"evidence\":\"v1.py (scratchpad/analysis/seaquest_attempt1_verify/) printed: 'statements 228 applied 228 errors []'.…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 8,
+      "label": "verify:seaquest#2:rerun",
+      "phaseIndex": 2,
+      "phaseTitle": "Verify",
+      "agentId": "a826534a33ff0da25",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1793976618426,
+      "queuedAt": 1793976618423,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "Context: replication of \"Sparks of Weight-Space Programming\" Experiment 5. Claude Opus 5.5 was given the paper's prompt\n(/Users/dhaneshneelamana/lm_understand-logs/exp5_write_from_scratch/runs/<game>/reply/prompt.txt: game rules, the MinAtar 1.0.15 game source, the 6-channel 10x10 input, the\n600->32->32->6 tanh network, and an \"edits\" language) and wrote every weight in one reply, with no tools, n…",
+      "promptFramed": true,
+      "lastProgressAt": 1793977410604,
+      "tokens": 163886,
+      "toolCalls": 34,
+      "durationMs": 792178,
+      "resultPreview": "{\"verdicts\":[{\"claim\":\"The scored net is exactly the reply's edits block.\",\"refuted\":false,\"reason\":\"I rebuilt the net with my own parser, which runs each edits line as numpy code instead of using wsp.apply_edits. It matches net.npz exactly.\",\"evidence\":\"refute/c1_exec_parse.py output: 'edits blocks found: 1', 'statements 204 executed 204'. max|diff| = 0.0 for W1, b1, W2, b2, W3 and b3. 1280 nonze…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 9,
+      "label": "verify:seaquest#2:text",
+      "phaseIndex": 2,
+      "phaseTitle": "Verify",
+      "agentId": "ab8a5e8698cb65807",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1793976618426,
+      "queuedAt": 1793976618423,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "Context: replication of \"Sparks of Weight-Space Programming\" Experiment 5. Claude Opus 5.5 was given the paper's prompt\n(/Users/dhaneshneelamana/lm_understand-logs/exp5_write_from_scratch/runs/<game>/reply/prompt.txt: game rules, the MinAtar 1.0.15 game source, the 6-channel 10x10 input, the\n600->32->32->6 tanh network, and an \"edits\" language) and wrote every weight in one reply, with no tools, n…",
+      "promptFramed": true,
+      "lastProgressAt": 1793977340801,
+      "tokens": 162931,
+      "toolCalls": 31,
+      "durationMs": 722375,
+      "resultPreview": "{\"verdicts\":[{\"claim\":\"The scored net is exactly the reply's edits block.\",\"refuted\":false,\"reason\":\"Confirmed. I re-parsed answer.md with wsp.apply_edits and compared it to net.npz: they match exactly. The nonzero count also matches run.json.\",\"evidence\":\"seaquest_attempt2_verify/v1.py: 'statements 204 applied 204 errors []'; max|diff| is 0.0 for W1, b1, W2, b2, W3 and b3; 'nnz total 1280', which…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 10,
+      "label": "synthesize:seaquest",
+      "phaseIndex": 3,
+      "phaseTitle": "Synthesize",
+      "agentId": "a132144119ff37624",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1793977532213,
+      "queuedAt": 1793977532195,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "seaquest",
+      "promptPreview": "Context: replication of \"Sparks of Weight-Space Programming\" Experiment 5. Claude Opus 5.5 was given the paper's prompt\n(/Users/dhaneshneelamana/lm_understand-logs/exp5_write_from_scratch/runs/<game>/reply/prompt.txt: game rules, the MinAtar 1.0.15 game source, the 6-channel 10x10 input, the\n600->32->32->6 tanh network, and an \"edits\" language) and wrote every weight in one reply, with no tools, n…",
+      "promptFramed": true,
+      "lastProgressAt": 1793977868457,
+      "tokens": 144619,
+      "toolCalls": 14,
+      "durationMs": 336244,
+      "resultPreview": "{\"game\":\"seaquest\",\"headline\":\"Claude's three one-shot Seaquest networks scored 7.41, 7.45 and 51.69 (1,000 episodes each). For reference: zero-weight floor 0.1, PPO 100M 5.6, PPO 500M 88.9, Astra (GPT-6) 53.1. Attempts 1 and 2 are turrets parked mid-screen that turn to face enemies, and they survive only about 300 to 350 steps. Attempt 3 parks at column 8 facing left and moves only up and down, w…"
+    }
+  ],
+  "totalTokens": 1636595,
+  "totalToolCalls": 329
+}

@@ -1,0 +1,60 @@
+=== claim 2: one-step danger detection, Claude seeds 0..99 ===
+states: 50258 pairs: 150774
+(fatal, unit>0.9): {(False, False): 140105, (False, True): 3525, (True, True): 7144}
+recall 7144/7144 false alarms 3525/143630 = 0.0245
+policy prob on fatal pairs: median 0.000027 mean 0.00146 p90 0.00009 max 0.6912 share>0.01 0.0151 (n>0.01 = 108)
+fatal pairs with p>0.01 by (edge row?, own-row stay unit>0.3?): {('edge', 'own_row_flagged'): 89, ('mid', 'own_row_flagged'): 19}
+min gated-unit value on a fatal pair: 0.9997
+
+=== claim 3: death causes, Claude seeds 0..199 ===
+died 200 of 200
+    78  sticky repeat of u, chosen n safe
+    61  sticky repeat of d, chosen n safe
+    21  sticky repeat of d, chosen u safe
+    15  sticky repeat of u, chosen d safe
+    10  executed == chosen (policy sampled fatal), safe vertical alt exists=False
+     9  executed == chosen (policy sampled fatal), safe vertical alt exists=True
+     4  sticky repeat of n, chosen u safe
+     2  sticky changed action but chosen also fatal
+sticky repeats of a vertical move with safe chosen action: 175 / 200
+  of these, previous step's executed action equals repeated action: 175
+expected deaths (sum over steps): sticky 161.5, policy 18.3, total 179.8 vs 200 deaths
+policy-sampled deaths (seed, t, action, P(fatal set), row, own-row status):
+    2 1167 n 1.0000 4 enemy_d1
+    8 1131 n 1.0000 1 enemy_d1
+    9 322 d 0.0190 1 enemy_d2_3
+    13 932 d 0.0150 6 enemy_d2_3
+    25 930 d 1.0000 8 enemy_d1
+    28 505 n 1.0000 8 enemy_d1
+    30 1136 u 0.0142 6 enemy_d2_3
+    35 1085 n 1.0000 1 enemy_d1
+    55 1155 d 1.0000 1 enemy_d1
+    97 1036 n 1.0000 8 enemy_d1
+    107 49 d 0.0190 1 enemy_d2_3
+    109 1036 u 1.0000 1 enemy_d1
+    125 342 u 0.0169 8 enemy_d2_3
+    136 943 n 1.0000 8 enemy_d1
+    153 1283 d 0.0422 1 enemy_d2_3
+    166 943 u 0.0169 8 enemy_d2_3
+    176 1173 d 0.0149 6 enemy_d2_3
+    184 961 d 1.0000 1 enemy_d1
+    197 377 u 0.0067 7 enemy_d2_3
+
+=== claim 4: step T-1 before sticky-vertical deaths ===
+own-row status at T-1: [('empty', 110), ('enemy_passed', 29), ('enemy_d2_3', 17), ('gold_approach', 10), ('enemy_d4plus', 6), ('gold_passed', 3)]
+voluntary? {'voluntary (chosen==executed at T-1)': 160, 'itself sticky at T-1': 15}
+noop safe at T-1? {'noop at T-1 safe': 175}
+P(policy picks that move) at T-1: median 0.294 quartiles [0.162 0.561]
+from empty: 110, from passed-enemy: 29, from passed-gold: 3, total 175
+voluntary AND from empty/passed-enemy row: 128
+
+=== claim 8: lengths ===
+claude: mean len 532.9; steps>205 149; steps>=205 149; steps>=817 50; steps>817 50; median 520; deaths 200
+astra: mean len 904.0; steps>205 190; steps>=205 190; steps>=817 141; steps>817 141; median 960; deaths 200
+
+=== claim 10: seed 9 last steps ===
+seed 9 steps 323 died True
+  t=319 row 1 own enemy_d2_3 P(n,u,d)=(0.809,0.172,0.019) F(n,u,d)=[False, False, False] units(s,u,d)=(0.62, 0.62, 1.0) chosen n executed n
+  t=320 row 1 own enemy_d2_3 P(n,u,d)=(0.809,0.172,0.019) F(n,u,d)=[False, False, False] units(s,u,d)=(0.62, 0.62, 1.0) chosen n executed n
+  t=321 row 1 own enemy_d2_3 P(n,u,d)=(0.809,0.172,0.019) F(n,u,d)=[False, False, True] units(s,u,d)=(0.62, 0.62, 1.0) chosen n executed n
+  t=322 row 1 own enemy_d2_3 P(n,u,d)=(0.809,0.172,0.019) F(n,u,d)=[False, False, True] units(s,u,d)=(0.62, 0.62, 1.0) chosen d executed d

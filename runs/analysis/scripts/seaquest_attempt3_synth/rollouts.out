@@ -1,0 +1,15 @@
+attempt1: mean 8.03 se 0.54 mean_len 350.5 median_len 288
+   sampled action share [0.0, 0.0154, 0.0653, 0.022, 0.0764, 0.8209] (noop,left,up,right,down,fire)
+   executed L/R per episode 13.06; executed L/R share 0.0373
+   sub column share (rows>=1) [0.001, 0.001, 0.003, 0.004, 0.026, 0.531, 0.375, 0.029, 0.014, 0.017]
+   replica check vs wsp.play_episode seeds 0-2: mine [(3.0, 183), (17.0, 746), (19.0, 517)] official [(3.0, 183), (17.0, 746), (19.0, 517)]
+attempt2: mean 8.34 se 0.64 mean_len 302.4 median_len 201
+   sampled action share [0.153, 0.0622, 0.0942, 0.062, 0.1107, 0.5179] (noop,left,up,right,down,fire)
+   executed L/R per episode 37.45; executed L/R share 0.1239
+   sub column share (rows>=1) [0.005, 0.011, 0.022, 0.043, 0.443, 0.391, 0.043, 0.025, 0.011, 0.006]
+   replica check vs wsp.play_episode seeds 0-2: mine [(12.0, 390), (4.0, 104), (4.0, 106)] official [(12.0, 390), (4.0, 104), (4.0, 106)]
+attempt3: mean 49.84 se 2.93 mean_len 1240.5 median_len 1121
+   sampled action share [0.0001, 0.0011, 0.0899, 0.0036, 0.0929, 0.8125] (noop,left,up,right,down,fire)
+   executed L/R per episode 5.74; executed L/R share 0.0046
+   sub column share (rows>=1) [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0]
+   replica check vs wsp.play_episode seeds 0-2: mine [(3.0, 171), (132.0, 2767), (9.0, 340)] official [(3.0, 171), (132.0, 2767), (9.0, 340)]

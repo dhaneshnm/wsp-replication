@@ -1,0 +1,52 @@
+parse: 115 115 []
+net.npz == re-parsed answer: True
+nonzero: 374
+
+== D unit (row 3 -> unit 2) and G unit (unit 18) for single entity in row 3 ==
+e c0 R: D=-0.834 G=-0.762 | e c0 L: D=-0.834 G=-0.762 | 
+e c1 R: D=-0.834 G=-0.762 | e c1 L: D=-0.834 G=-0.762 | 
+e c2 R: D=-0.537 G=-0.762 | e c2 L: D=-0.537 G=-0.762 | 
+e c3 R: D=+0.000 G=-0.762 | e c3 L: D=-0.834 G=-0.964 | 
+e c4 R: D=+0.834 G=-0.762 | e c4 L: D=-0.834 G=-0.995 | 
+e c5 R: D=+0.834 G=-0.964 | e c5 L: D=+0.834 G=-0.964 | 
+e c6 R: D=-0.834 G=-0.995 | e c6 L: D=+0.834 G=-0.762 | 
+e c7 R: D=-0.834 G=-0.964 | e c7 L: D=+0.000 G=-0.762 | 
+e c8 R: D=-0.537 G=-0.762 | e c8 L: D=-0.537 G=-0.762 | 
+e c9 R: D=-0.834 G=-0.762 | e c9 L: D=-0.834 G=-0.762 | 
+g c0 R: D=-0.834 G=-0.762 | g c0 L: D=-0.834 G=-0.762 | 
+g c1 R: D=-0.834 G=-0.762 | g c1 L: D=-0.834 G=-0.762 | 
+g c2 R: D=-0.834 G=-0.762 | g c2 L: D=-0.834 G=-0.762 | 
+g c3 R: D=-0.834 G=+0.000 | g c3 L: D=-0.984 G=-0.762 | 
+g c4 R: D=-0.834 G=+0.762 | g c4 L: D=-0.999 G=-0.762 | 
+g c5 R: D=-0.984 G=+0.762 | g c5 L: D=-0.984 G=+0.762 | 
+g c6 R: D=-0.999 G=-0.762 | g c6 L: D=-0.834 G=+0.762 | 
+g c7 R: D=-0.984 G=-0.762 | g c7 L: D=-0.834 G=+0.000 | 
+g c8 R: D=-0.834 G=-0.762 | g c8 L: D=-0.834 G=-0.762 | 
+g c9 R: D=-0.834 G=-0.762 | g c9 L: D=-0.834 G=-0.762 | 
+empty row: D=-0.834 G=-0.762
+P units with player at row 5: [-0.995 -0.995 -0.995 -0.995  0.995 -0.995 -0.995 -0.995]
+
+== Logits / probs, player at row 5 col 5 ==
+empty board                                          logits=[ 10.973 -60.      6.973 -60.      6.973 -60.   ] p(n,u,d)=[0.965 0.018 0.018] p(l,r,f)=4.4e-31
+own row enemy c4 R (fatal stay)                      logits=[-11.328 -60.      6.971 -60.      6.971 -60.   ] p(n,u,d)=[0.  0.5 0.5] p(l,r,f)=1.2e-29
+own row enemy c4 R, row4 enemy c5                    logits=[-11.33  -60.    -16.242 -60.      6.97  -60.   ] p(n,u,d)=[0. 0. 1.] p(l,r,f)=2.5e-29
+own row enemy c4 R, rows 4&6 enemy c5                logits=[-11.331 -60.    -16.243 -60.    -16.243 -60.   ] p(n,u,d)=[0.986 0.007 0.007] p(l,r,f)=2.2e-21
+own row enemy c3 R (medium)                          logits=[ -1.263 -60.      6.972 -60.      6.972 -60.   ] p(n,u,d)=[0.  0.5 0.5] p(l,r,f)=1.2e-29
+own row enemy c3 R, row4 c3 R (medium), row6 empty   logits=[ -1.263 -60.     -5.263 -60.      6.972 -60.   ] p(n,u,d)=[0. 0. 1.] p(l,r,f)=2.5e-29
+own row enemy c4 L (receding)                        logits=[  9.328 -60.      6.973 -60.      6.973 -60.   ] p(n,u,d)=[0.841 0.08  0.08 ] p(l,r,f)=2.0e-30
+row4 gold c5                                         logits=[ 10.973 -60.     17.058 -60.      6.973 -60.   ] p(n,u,d)=[0.002 0.998 0.   ] p(l,r,f)=1.0e-33
+row4 gold c4 R (approaching)                         logits=[ 10.973 -60.     15.78  -60.      6.973 -60.   ] p(n,u,d)=[0.008 0.992 0.   ] p(l,r,f)=3.7e-33
+row4 gold c3 R                                       logits=[ 10.973 -60.     11.845 -60.      6.973 -60.   ] p(n,u,d)=[0.293 0.701 0.005] p(l,r,f)=1.3e-31
+row3 gold c5 (2 rows away)                           logits=[ 10.973 -60.      6.973 -60.      6.973 -60.   ] p(n,u,d)=[0.965 0.018 0.018] p(l,r,f)=4.3e-31
+own row gold c4 R                                    logits=[ 19.78  -60.      6.973 -60.      6.973 -60.   ] p(n,u,d)=[1. 0. 0.] p(l,r,f)=6.7e-35
+row4 gold c4 R + own row enemy c2 R                  logits=[  6.703 -60.     15.78  -60.      6.973 -60.   ] p(n,u,d)=[0. 1. 0.] p(l,r,f)=3.7e-33
+row4 enemy c6 L (fatal up)                           logits=[ 10.971 -60.    -15.328 -60.      6.971 -60.   ] p(n,u,d)=[0.982 0.    0.018] p(l,r,f)=4.4e-31
+row6 enemy c5 (fatal down)                           logits=[ 10.971 -60.      6.971 -60.    -16.241 -60.   ] p(n,u,d)=[0.982 0.018 0.   ] p(l,r,f)=4.4e-31
+
+== Active layer-2 units for player row 5 (k12 stay, k13 up, k14 down), empty board ==
+h2[12:15]= [-0.279 -0.279 -0.279]  inactive mean= -0.9999922
+
+== Edge rows: player at row 1 and row 8, empty board ==
+row 1: logits=[  9.09  -60.      5.09  -60.      6.973 -60.   ] p(n,u,d)=[0.878 0.016 0.106]
+row 8: logits=[  9.09  -60.      6.973 -60.      5.09  -60.   ] p(n,u,d)=[0.878 0.106 0.016]
+player row 2, empty board: [0.979 0.003 0.018]

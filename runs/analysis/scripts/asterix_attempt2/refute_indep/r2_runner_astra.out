@@ -1,0 +1,2 @@
+astra n 200 mean score 57.740 se 2.397 mean len 904.04
+analytic fatality matched env 'done' on every step of every episode (else RuntimeError)

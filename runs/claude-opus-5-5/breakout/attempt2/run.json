@@ -1,0 +1,39 @@
+{
+ "model": "claude-opus-5-5",
+ "effort": "high",
+ "game": "breakout",
+ "attempt": 2,
+ "wall_seconds": 506.68616700172424,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 0,
+  "inference_geo": "global",
+  "input_tokens": 3745,
+  "output_tokens": 53777,
+  "output_tokens_details": {
+   "thinking_tokens": 49048
+  },
+  "server_tool_use": null,
+  "service_tier": "standard",
+  "speed": "standard",
+  "stop_reason": "end_turn"
+ },
+ "parse": {
+  "statements": 96,
+  "applied": 96,
+  "errors": []
+ },
+ "nonzero_weights": 1214,
+ "score": {
+  "mean": 449.692,
+  "se": 9.316000912892239,
+  "episodes": 1000,
+  "max": 840.0,
+  "mean_length": 5461.806
+ },
+ "tools_available": false
+}

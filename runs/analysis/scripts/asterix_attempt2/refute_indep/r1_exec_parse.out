@@ -1,0 +1,83 @@
+statements exec'd: 163 raw npz keys: ['actor/dense1/bias', 'actor/dense1/kernel', 'actor/dense2/bias', 'actor/dense2/kernel', 'actor/logits/bias', 'actor/logits/kernel']
+W1: shape (600, 32) max|exec - npz| = 0.0
+b1: shape (32,) max|exec - npz| = 0.0
+W2: shape (32, 32) max|exec - npz| = 0.0
+b2: shape (32,) max|exec - npz| = 0.0
+W3: shape (32, 6) max|exec - npz| = 0.0
+b3: shape (6,) max|exec - npz| = 0.0
+nonzero weights (exec): 742
+
+Layer 1 (row 3 entity; player in row 6). cols: H1_3=unit10 H2_3=unit18 G_3=unit26
+ kind  dir  col dist  |  H1     H2     G
+ enemy R   0   +5   | -1.000 -0.462 -0.999
+ enemy R   1   +4   | -1.000 -0.462 -0.999
+ enemy R   2   +3   | -1.000 +0.995 -1.000
+ enemy R   3   +2   | -1.000 +0.995 -1.000
+ enemy R   4   +1   | +0.995 +0.762 -1.000
+ enemy R   5   +0   | +1.000 +0.995 -1.000
+ enemy R   6   -1   | -1.000 -0.995 -1.000
+ enemy R   7   -2   | -1.000 -1.000 -1.000
+ enemy R   8   -3   | -1.000 -1.000 -1.000
+ enemy R   9   -4   | -1.000 -1.000 -1.000
+ enemy L   0   -5   | -1.000 -1.000 -1.000
+ enemy L   1   -4   | -1.000 -1.000 -1.000
+ enemy L   2   -3   | -1.000 -1.000 -1.000
+ enemy L   3   -2   | -1.000 -1.000 -1.000
+ enemy L   4   -1   | -1.000 -0.995 -1.000
+ enemy L   5   +0   | +1.000 +1.000 -1.000
+ enemy L   6   +1   | +0.995 +1.000 -1.000
+ enemy L   7   +2   | -1.000 +0.995 -1.000
+ enemy L   8   +3   | -1.000 +0.995 -0.999
+ enemy L   9   +4   | -1.000 -0.462 -0.999
+ gold  R   0   +5   | -1.000 -0.999 +0.995
+ gold  R   1   +4   | -1.000 -0.999 +0.995
+ gold  R   2   +3   | -1.000 -1.000 +0.995
+ gold  R   3   +2   | -1.000 -1.000 +0.995
+ gold  R   4   +1   | -0.995 -1.000 +0.995
+ gold  R   5   +0   | -1.000 -1.000 +0.995
+ gold  R   6   -1   | -1.000 -1.000 -1.000
+ gold  R   7   -2   | -1.000 -1.000 -1.000
+ gold  R   8   -3   | -0.995 -1.000 -1.000
+ gold  R   9   -4   | -1.000 -1.000 -0.995
+ gold  L   0   -5   | -1.000 -1.000 -0.995
+ gold  L   1   -4   | -1.000 -1.000 -1.000
+ gold  L   2   -3   | -0.995 -1.000 -1.000
+ gold  L   3   -2   | -1.000 -1.000 -1.000
+ gold  L   4   -1   | -1.000 -1.000 -0.995
+ gold  L   5   +0   | -1.000 -1.000 +1.000
+ gold  L   6   +1   | -0.995 -1.000 +0.995
+ gold  L   7   +2   | -1.000 -1.000 +0.995
+ gold  L   8   +3   | -1.000 -0.999 +0.995
+ gold  L   9   +4   | -1.000 -0.999 +0.995
+ empty row 3: H1 -1.000 H2 -0.999 G -0.999
+ P units with player row 6: [-0.995 -0.995 -0.995 -0.995 -0.995  0.995 -0.995 -0.995]
+
+Layer 2 gated units, player row 4: stay_4=unit3 (own row 4), up_4=unit11 (row 3), down_4=unit19 (row 5)
+ neutral(empty)             stay -0.485  up -0.485  down -0.485
+ immediate enemy col4 R     stay +1.000  up +1.000  down +1.000
+ immediate enemy col5 R     stay +1.000  up +1.000  down +1.000
+ immediate enemy col6 L     stay +1.000  up +1.000  down +1.000
+ near enemy col3 R (d2)     stay +0.436  up +0.436  down +0.436
+ near enemy col2 R (d3)     stay +0.436  up +0.436  down +0.436
+ near enemy col7 L (d2)     stay +0.436  up +0.436  down +0.436
+ near enemy col8 L (d3)     stay +0.436  up +0.436  down +0.436
+ far enemy col1 R (d4)      stay -0.256  up -0.256  down -0.256
+ far enemy col0 R (d5)      stay -0.256  up -0.256  down -0.256
+ far enemy col9 L (d4)      stay -0.256  up -0.256  down -0.256
+ passed enemy col6 R        stay -0.483  up -0.483  down -0.483
+ passed enemy col8 R        stay -0.485  up -0.485  down -0.485
+ gold col3 R                stay -0.987  up -0.987  down -0.987
+ gold col1 R                stay -0.987  up -0.987  down -0.987
+ gold col5 R                stay -0.987  up -0.987  down -0.987
+ passed gold col7 R         stay -0.485  up -0.485  down -0.485
+
+inactive gated units (player row 4): stay units [-1. -1. -1. -1. -1. -1. -1.] up [-1. -1. -1. -1. -1. -1. -1.]
+gold-dir units, empty board, player row 4: [-1.     -1.     -1.     -0.0497 -1.     -1.     -1.     -1.    ]
+ empty board player row 1: goldDir_active -0.0518 logits n 45.137 u 43.586 d 44.964 l/r/f -20.0/-20.0/-20.0  d-u +1.3784
+ empty board player row 2: goldDir_active -0.0511 logits n 46.412 u 43.586 d 44.963 l/r/f -20.0/-20.0/-20.0  d-u +1.3770
+ empty board player row 3: goldDir_active -0.0504 logits n 46.412 u 44.862 d 44.963 l/r/f -20.0/-20.0/-20.0  d-u +0.1008
+ empty board player row 4: goldDir_active -0.0497 logits n 46.412 u 44.863 d 44.962 l/r/f -20.0/-20.0/-20.0  d-u +0.0995
+ empty board player row 5: goldDir_active -0.0491 logits n 46.412 u 44.863 d 44.961 l/r/f -20.0/-20.0/-20.0  d-u +0.0982
+ empty board player row 6: goldDir_active -0.0484 logits n 46.412 u 44.864 d 44.961 l/r/f -20.0/-20.0/-20.0  d-u +0.0968
+ empty board player row 7: goldDir_active -0.0477 logits n 46.412 u 44.865 d 43.685 l/r/f -20.0/-20.0/-20.0  d-u -1.1794
+ empty board player row 8: goldDir_active -0.0471 logits n 45.137 u 44.865 d 43.685 l/r/f -20.0/-20.0/-20.0  d-u -1.1807

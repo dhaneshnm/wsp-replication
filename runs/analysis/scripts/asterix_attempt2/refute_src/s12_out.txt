@@ -1,0 +1,8 @@
+weight-3 entries zeroed (player row, unit): [(1, 10), (2, 11), (3, 0), (3, 12), (4, 1), (4, 13), (5, 2), (5, 14), (6, 3), (6, 15), (7, 4), (8, 5)]
+weight-3 entries zeroed (player row, unit): [(1, 10), (2, 11), (3, 0), (3, 12), (4, 1), (4, 13), (5, 2), (5, 14), (6, 3), (6, 15), (7, 4), (8, 5)]
+ablated astra, enemy 2 rows up at col5: P(n,u,d)=(0.558,0.238,0.204)
+weight-3 entries zeroed (player row, unit): [(1, 10), (2, 11), (3, 0), (3, 12), (4, 1), (4, 13), (5, 2), (5, 14), (6, 3), (6, 15), (7, 4), (8, 5)]
+weight-3 entries zeroed (player row, unit): [(1, 10), (2, 11), (3, 0), (3, 12), (4, 1), (4, 13), (5, 2), (5, 14), (6, 3), (6, 15), (7, 4), (8, 5)]
+weight-3 entries zeroed (player row, unit): [(1, 10), (2, 11), (3, 0), (3, 12), (4, 1), (4, 13), (5, 2), (5, 14), (6, 3), (6, 15), (7, 4), (8, 5)]
+weight-3 entries zeroed (player row, unit): [(1, 10), (2, 11), (3, 0), (3, 12), (4, 1), (4, 13), (5, 2), (5, 14), (6, 3), (6, 15), (7, 4), (8, 5)]
+astra_no_lookahead       n=200 mean  16.61 se  1.31 mean_len   394.4 max 106

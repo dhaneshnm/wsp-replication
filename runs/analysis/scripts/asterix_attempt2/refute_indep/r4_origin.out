@@ -1,0 +1,10 @@
+sticky-vertical deaths analysed: 175
+status of row entered at T-1: [('empty', 92), ('enemy_passed', 45), ('gold_approach', 29), ('enemy_d4plus', 4), ('gold_passed', 3), ('enemy_d1', 1), ('enemy_d2_3', 1)]
+gold on side moved toward at T-1: {'no approaching gold on that side': 109, 'approaching gold on the side moved toward': 66}
+(own row, entered row) at T-1, top: [(('empty', 'empty'), 59), (('empty', 'enemy_passed'), 28), (('empty', 'gold_approach'), 19), (('enemy_passed', 'empty'), 16), (('enemy_d2_3', 'enemy_passed'), 8), (('enemy_d2_3', 'empty'), 7), (('enemy_passed', 'gold_approach'), 6), (('enemy_passed', 'enemy_passed'), 5)]
+
+fatal pairs WITH a safe vertical alternative (seeds 0..99): policy prob distribution
+  edge/own-clear     n=  601 median 0.00009 p99 0.0010 max 0.0010 share>0.007 0.0000 n>0.042 0
+  edge/own-flagged   n=   89 median 0.01890 p99 0.1471 max 0.1471 share>0.007 0.7978 n>0.042 12
+  mid/own-clear      n= 6168 median 0.00003 p99 0.0001 max 0.0003 share>0.007 0.0000 n>0.042 0
+  mid/own-flagged    n=  265 median 0.00030 p99 0.0607 max 0.2176 share>0.007 0.2566 n>0.042 4

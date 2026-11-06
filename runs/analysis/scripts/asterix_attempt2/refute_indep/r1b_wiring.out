@@ -1,0 +1,5 @@
+wiring mismatches over 64 (player row, enemy row) pairs: 0
+example drop (y=4, enemy at col5 in row 3): n/u/d [ 0.     8.911 -0.   ]
+player row 4, gold above r1 : u-d logit = +1.477
+player row 4, gold below r8 : u-d logit = -1.561
+player row 4, none          : u-d logit = -0.099

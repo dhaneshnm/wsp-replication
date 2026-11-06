@@ -1,0 +1,3 @@
+claude_look_w4 seeds 0..199: mean 10.31 se 0.72 mean_len 326.7
+claude_look_w8 seeds 0..199: mean 3.35 se 0.27 mean_len 135.9
+astra_nolook_nosticky seeds 0..199: mean 88.08 se 3.03 mean_len 1113.3

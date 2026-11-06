@@ -1,0 +1,9 @@
+statements: 115 executed ok: 115
+npz keys: ['actor/dense1/kernel', 'actor/dense1/bias', 'actor/dense2/kernel', 'actor/dense2/bias', 'actor/logits/kernel', 'actor/logits/bias']
+W1 (600, 32) equal: True nonzero: 224
+b1 (32,) equal: True nonzero: 24
+W2 (32, 32) equal: True nonzero: 72
+b2 (32,) equal: True nonzero: 24
+W3 (32, 6) equal: True nonzero: 24
+b3 (6,) equal: True nonzero: 6
+ALL EQUAL: True total nonzero in npz: 374

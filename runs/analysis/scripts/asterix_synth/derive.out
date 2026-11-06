@@ -1,0 +1,9 @@
+a1     steps    166780 moves   13326 sticky-vertical deaths/1000 moves  8.70 per 1000 steps  0.70  all deaths/1000 steps  1.20  score/step 0.0378
+a2     steps    106580 moves   23075 sticky-vertical deaths/1000 moves  7.58 per 1000 steps  1.64  all deaths/1000 steps  1.88  score/step 0.0395
+a3     steps    153200 moves   29261 sticky-vertical deaths/1000 moves  5.74 per 1000 steps  1.10  all deaths/1000 steps  1.31  score/step 0.0616
+astra  steps    180800 moves   55632 sticky-vertical deaths/1000 moves  0.81 per 1000 steps  0.25  all deaths/1000 steps  1.11  score/step 0.0639
+Astra/a1: score ratio 1.834 = length ratio 1.084 x score-per-step ratio 1.691; log share length 0.13
+Astra/a2: score ratio 2.740 = length ratio 1.696 x score-per-step ratio 1.615; log share length 0.52
+Astra/a3: score ratio 1.224 = length ratio 1.180 x score-per-step ratio 1.037; log share length 0.82
+a3/a1: score ratio 1.498 = length 0.919 x per-step 1.630
+a1/a2: score ratio 1.495 = length 1.565 x per-step 0.955

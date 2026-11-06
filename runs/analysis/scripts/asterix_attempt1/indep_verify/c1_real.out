@@ -1,0 +1,21 @@
+states: 14153 episodes: 20 (seeds 0-19) collision-model mismatches: 0
+D_r vs tanh(0.6*S_table - 1.2), by table row (count, max abs err):
+  empty                        n=  50085 maxerr=3.509e-08
+  enemy c0 (not in table)      n=   2986 maxerr=3.509e-08
+  enemy c1 (not in table)      n=   5052 maxerr=3.509e-08
+  enemy c2/c8                  n=  10089 maxerr=2.454e-08
+  enemy c3/c7 approaching      n=   5122 maxerr=0.000e+00
+  enemy c4/c6 approaching      n=   5088 maxerr=3.509e-08
+  enemy c5                     n=   5038 maxerr=2.451e-08
+  enemy c9 (not in table)      n=   2801 maxerr=3.509e-08
+  enemy moving away            n=   9934 maxerr=3.509e-08
+  treasure rows: max D = -0.8337 (table: S<=0 -> D<= -0.8337)
+G_r by situation (n, min, mean, max):
+  empty                        n=  50085 min=-0.7616 mean=-0.7616 max=-0.7616
+  enemy row                    n=  46110 min=-0.9951 mean=-0.8307 max=-0.7616
+  gold c3/c7 approaching       n=   2569 min=+0.0000 mean=+0.0000 max=+0.0000
+  gold c3/c7 away              n=   1356 min=-0.7616 mean=-0.7616 max=-0.7616
+  gold c4/c6 approaching       n=   2550 min=+0.7616 mean=+0.7616 max=+0.7616
+  gold c4/c6 away              n=   1374 min=-0.7616 mean=-0.7616 max=-0.7616
+  gold c5                      n=   1441 min=+0.7616 mean=+0.7616 max=+0.7616
+  gold other col               n=   7739 min=-0.7616 mean=-0.7616 max=-0.7616

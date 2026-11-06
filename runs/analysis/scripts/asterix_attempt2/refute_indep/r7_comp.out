@@ -1,0 +1,6 @@
+complook_2: empty-board n,u,d [46.41 44.86 44.96]; immediate enemy 2 rows above: n,u,d [46.41 35.96 44.96]
+complook_2 seeds 0..199: mean 45.94 se 1.56 mean_len 925.0
+complook_4: empty-board n,u,d [46.41 44.86 44.96]; immediate enemy 2 rows above: n,u,d [46.41 35.95 44.96]
+complook_4 seeds 0..199: mean 40.45 se 1.42 mean_len 874.3
+complook_8: empty-board n,u,d [46.41 44.86 44.96]; immediate enemy 2 rows above: n,u,d [46.41 35.95 32.97]
+complook_8 seeds 0..199: mean 16.10 se 0.80 mean_len 522.9

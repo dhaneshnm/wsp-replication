@@ -1,0 +1,8 @@
+claude_a1: seeds 0..199 mean 31.49 se 1.64 mean_len 833.9 score/step 0.0378 gold spawned 13973 collected 6298 capture 0.451 row changes/100 steps 7.99 cols [5]
+   deaths 200: sticky-changed & sampled action safe 140 (of which executed up/down 116); executed == sampled 60
+claude_a2: seeds 0..199 mean 21.07 se 1.47 mean_len 532.9 score/step 0.0395 gold spawned 6923 collected 4213 capture 0.609 row changes/100 steps 21.65 cols [5]
+   deaths 200: sticky-changed & sampled action safe 179 (of which executed up/down 175); executed == sampled 19
+claude_a3: seeds 0..199 mean 47.16 se 2.50 mean_len 766.0 score/step 0.0616 gold spawned 12347 collected 9432 capture 0.764 row changes/100 steps 19.10 cols [5]
+   deaths 200: sticky-changed & sampled action safe 186 (of which executed up/down 168); executed == sampled 13
+astra: seeds 0..199 mean 57.74 se 2.40 mean_len 904.0 score/step 0.0639 gold spawned 16974 collected 11548 capture 0.680 row changes/100 steps 30.77 cols [5]
+   deaths 200: sticky-changed & sampled action safe 67 (of which executed up/down 45); executed == sampled 129

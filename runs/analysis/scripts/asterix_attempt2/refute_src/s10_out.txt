@@ -1,0 +1,4 @@
+(fatal, unit>0.9) counts over (state, vertical action) pairs: {(False, np.False_): 140105, (False, np.True_): 3525, (True, np.True_): 7144}
+recall of fatal actions: 1.0
+false-alarm rate on safe actions: 0.024542226554341014
+policy prob on fatal actions: median 0.00003, 90th pct 0.0001, 99th pct 0.0169, max 0.691, share >0.01: 0.0151

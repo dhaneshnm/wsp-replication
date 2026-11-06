@@ -1,0 +1,83 @@
+{
+ "price_per_mtok": {
+  "input": 4,
+  "output": 20
+ },
+ "calls": [
+  {
+   "run": "runs/cap128k/claude-opus-5-5/seaquest/attempt1",
+   "input": 6822,
+   "output": 71735,
+   "stop": "end_turn",
+   "usd": 1.462
+  },
+  {
+   "run": "runs/cap128k/claude-opus-5-5/seaquest/attempt2",
+   "input": 6822,
+   "output": 79376,
+   "stop": "end_turn",
+   "usd": 1.615
+  },
+  {
+   "run": "runs/cap128k/claude-opus-5-5/seaquest/attempt3",
+   "input": 6822,
+   "output": 80425,
+   "stop": "end_turn",
+   "usd": 1.636
+  },
+  {
+   "run": "runs/claude-opus-5-5/asterix/attempt1",
+   "input": 3924,
+   "output": 28792,
+   "stop": "end_turn",
+   "usd": 0.592
+  },
+  {
+   "run": "runs/claude-opus-5-5/asterix/attempt2",
+   "input": 3924,
+   "output": 45033,
+   "stop": "end_turn",
+   "usd": 0.916
+  },
+  {
+   "run": "runs/claude-opus-5-5/asterix/attempt3",
+   "input": 3924,
+   "output": 43720,
+   "stop": "end_turn",
+   "usd": 0.89
+  },
+  {
+   "run": "runs/claude-opus-5-5/breakout/attempt1",
+   "input": 3745,
+   "output": 37529,
+   "stop": "end_turn",
+   "usd": 0.766
+  },
+  {
+   "run": "runs/claude-opus-5-5/breakout/attempt2",
+   "input": 3745,
+   "output": 53777,
+   "stop": "end_turn",
+   "usd": 1.091
+  },
+  {
+   "run": "runs/claude-opus-5-5/breakout/attempt3",
+   "input": 3745,
+   "output": 42899,
+   "stop": "end_turn",
+   "usd": 0.873
+  },
+  {
+   "run": "runs/claude-opus-5-5/seaquest/attempt1",
+   "input": 6822,
+   "output": 64000,
+   "stop": "max_tokens",
+   "usd": 1.307
+  }
+ ],
+ "logged_total_usd": 11.15,
+ "unlogged": {
+  "run": "seaquest 64k attempt 2, stopped by operator after ~310 s",
+  "estimated_usd": 0.6
+ }
+}

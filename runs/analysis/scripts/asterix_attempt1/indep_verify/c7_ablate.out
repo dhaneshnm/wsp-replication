@@ -1,0 +1,22 @@
+base                   mean 31.49 se 1.64 len 833.9
+danger2_0.6            mean 33.91 se 1.28 len 905.8
+treas2_0.3             mean 43.12 se 1.98 len 866.6
+both_0.6_0.3           mean 45.78 se 1.84 len 924.3
+danger2_0.3            mean 41.52 se 1.68 len 984.8
+danger2_1.2            mean 32.83 se 1.15 len 879.8
+danger2_2.4            mean 32.33 se 1.12 len 861.0
+danger2_0.6_nocomp     mean 38.20 se 2.37 len 748.8
+treas2_0.3_nocomp      mean 33.35 se 1.29 len 858.1
+both_0.6_0.3_nocomp    mean 50.39 se 2.48 len 849.3
+treas2_0.15            mean 42.71 se 1.93 len 888.4
+treas2_0.6             mean 41.07 se 1.80 len 858.6
+both_1.2_0.3           mean 37.40 se 1.32 len 865.5
+both_1.2_0.6           mean 38.02 se 1.38 len 859.3
+base_seed 0 episodes 200
+both_0.3_0.15          mean 49.63 se 1.86 len 981.9
+base_seed 200 episodes 200
+base                   mean 32.84 se 1.55 len 854.6
+danger2_0.3            mean 43.76 se 1.71 len 997.3
+treas2_0.15            mean 40.27 se 1.79 len 868.5
+both_0.3_0.15          mean 47.40 se 1.82 len 966.3
+astra                  mean 55.60 se 2.34 len 881.2

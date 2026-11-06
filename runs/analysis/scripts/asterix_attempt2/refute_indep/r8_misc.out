@@ -1,0 +1,2 @@
+near enemy (col3, moving right) in own row 4, other rows empty: P(n,u,d) = 0.009 0.471 0.520 ; P(move away) = 0.991
+{'total': 175, 'voluntary & own row empty/passed': 131, '... & entered row not approaching gold': 106}

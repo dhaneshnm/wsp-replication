@@ -1,0 +1,7 @@
+claude01 spawned 13973 captured 6298.0 rate 0.4507 steps 166772 spawn/step 0.0838
+astra01 spawned 16974 captured 11548.0 rate 0.6803 steps 180809 spawn/step 0.0939
+score ratio 1.8336 = spawn ratio 1.2148 x rate ratio 1.5094
+log share of rate ratio: 0.679
+gap per episode 26.25
+Claude spawns x Astra rate -> 47.53/ep, closes 0.611 of gap
+Astra spawns x Claude rate -> 38.25/ep, rate change from there closes 0.742 of gap

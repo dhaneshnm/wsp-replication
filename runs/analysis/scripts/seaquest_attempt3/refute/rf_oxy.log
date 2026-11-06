@@ -1,0 +1,54 @@
+union of oxygen seeds (mine | analyst): 35
+  seed 4 my cause oxygen o_last(pre) 0 d pre 2 d post 2 row pre 7 row post 7
+  seed 7 my cause collision o_last(pre) 0 d pre 4 d post 3 row pre 1 row post 0
+  seed 14 my cause oxygen o_last(pre) 0 d pre 1 d post 1 row pre 2 row post 2
+  seed 17 my cause oxygen o_last(pre) 0 d pre 3 d post 3 row pre 2 row post 2
+  seed 18 my cause oxygen o_last(pre) 0 d pre 0 d post 0 row pre 5 row post 5
+  seed 28 my cause oxygen o_last(pre) 0 d pre 0 d post 0 row pre 2 row post 2
+  seed 34 my cause oxygen o_last(pre) 0 d pre 5 d post 5 row pre 3 row post 2
+  seed 44 my cause oxygen o_last(pre) 0 d pre 1 d post 1 row pre 2 row post 1
+  seed 53 my cause oxygen o_last(pre) 0 d pre 2 d post 2 row pre 3 row post 2
+  seed 54 my cause oxygen o_last(pre) 0 d pre 0 d post 0 row pre 6 row post 6
+  seed 68 my cause oxygen o_last(pre) 0 d pre 0 d post 0 row pre 3 row post 3
+  seed 70 my cause oxygen o_last(pre) 0 d pre 2 d post 2 row pre 5 row post 4
+  seed 78 my cause oxygen o_last(pre) 0 d pre 0 d post 0 row pre 4 row post 4
+  seed 86 my cause oxygen o_last(pre) 0 d pre 1 d post 1 row pre 3 row post 2
+  seed 89 my cause oxygen o_last(pre) 0 d pre -1 d post -1 row pre 2 row post 2
+  seed 90 my cause oxygen o_last(pre) 0 d pre 6 d post 6 row pre 2 row post 2
+  seed 92 my cause oxygen o_last(pre) 0 d pre 0 d post 0 row pre 7 row post 7
+  seed 95 my cause oxygen o_last(pre) 0 d pre 4 d post 4 row pre 3 row post 3
+  seed 98 my cause oxygen o_last(pre) 0 d pre 3 d post 3 row pre 5 row post 5
+  seed 100 my cause oxygen o_last(pre) 0 d pre 0 d post 0 row pre 3 row post 3
+  seed 101 my cause oxygen o_last(pre) 0 d pre 5 d post 5 row pre 2 row post 2
+  seed 107 my cause oxygen o_last(pre) 0 d pre 1 d post 1 row pre 3 row post 2
+  seed 120 my cause collision o_last(pre) 0 d pre 3 d post 2 row pre 1 row post 0
+  seed 122 my cause oxygen o_last(pre) 0 d pre 4 d post 4 row pre 3 row post 3
+  seed 132 my cause oxygen o_last(pre) 0 d pre 2 d post 2 row pre 3 row post 3
+  seed 139 my cause collision o_last(pre) 0 d pre 3 d post 2 row pre 1 row post 0
+  seed 147 my cause oxygen o_last(pre) 0 d pre 4 d post 4 row pre 4 row post 4
+  seed 150 my cause oxygen o_last(pre) 0 d pre 5 d post 5 row pre 3 row post 3
+  seed 159 my cause oxygen o_last(pre) 0 d pre 3 d post 3 row pre 2 row post 1
+  seed 161 my cause oxygen o_last(pre) 0 d pre 5 d post 5 row pre 3 row post 3
+  seed 164 my cause oxygen o_last(pre) 0 d pre 2 d post 2 row pre 3 row post 2
+  seed 171 my cause oxygen o_last(pre) 0 d pre 5 d post 5 row pre 2 row post 2
+  seed 182 my cause oxygen o_last(pre) 0 d pre 3 d post 3 row pre 5 row post 4
+  seed 183 my cause oxygen o_last(pre) 0 d pre 2 d post 2 row pre 5 row post 5
+  seed 184 my cause oxygen o_last(pre) 0 d pre 6 d post 6 row pre 4 row post 4
+episodes whose final step began with oxygen <= 0: 35 ; pre-step divers>=1: 27 ; post-step divers>=1: 27
+oxygen-death seeds: 35  d>=1: 27
+final SURF window, all oxygen deaths with SURF on at death: 27 episodes; steps 1032 {'up chosen': 114, 'up vetoed by U(row above)': 901, 'pushed down': 14, 'up/down tie': 3}
+  'up vetoed' share: 901 / 1032 = 0.873062015503876 ; argmax==up on 117 steps
+  restricted to d>=1 episodes: 27 steps 1032 {'up chosen': 114, 'up vetoed by U(row above)': 901, 'pushed down': 14, 'up/down tie': 3}
+  per-episode vetoed share among d>=1: min 0.00 median 0.88 max 1.00; episodes with share>=0.87: 15
+veto steps (all SURF-on, d>=1 oxygen deaths): 1233  all danger cells moving away from col 8: 682
+  sub column during veto steps: {8: 1231, 7: 1, 9: 1}
+    ('enemy', 6, 'L') 326
+    ('enemy', 7, 'L') 315
+    ('enemy', 8, 'L') 271
+    ('enemy', 9, 'L') 112
+    ('enemy', 8, 'R') 81
+    ('enemy', 9, 'R') 79
+    ('enemy', 7, 'R') 53
+    ('enemy', 6, 'R') 28
+    ('bullet', 6, 'L') 25
+    ('bullet', 9, 'R') 17

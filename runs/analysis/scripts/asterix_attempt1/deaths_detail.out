@@ -1,0 +1,59 @@
+
+--- claude trapped: showing 6 of 59 (rows y-2..y+2 at pre-step; player row y, col 5)
+seed   4 step  947 ramp 9 mv_spd 1 mt 0 y=8 sampled n exec n p(n,u,d)=(0.93,0.06,0.02) fatal={'n': True, 'l': True, 'u': True, 'r': False, 'd': True} | r6:Ec3L r7:Ec6L r8:Ec4R
+seed   6 step  628 ramp 6 mv_spd 2 mt 0 y=1 sampled n exec n p(n,u,d)=(0.96,0.02,0.02) fatal={'n': True, 'l': False, 'u': True, 'r': True, 'd': True} | r1:Ec6L r2:Ec5R r3:Ec8R
+seed   8 step  596 ramp 5 mv_spd 3 mt 0 y=1 sampled n exec n p(n,u,d)=(0.96,0.02,0.02) fatal={'n': True, 'l': True, 'u': True, 'r': False, 'd': True} | r1:Ec4R r2:Ec5R r3:Ec9R
+seed  20 step 1181 ramp 9 mv_spd 1 mt 0 y=8 sampled n exec n p(n,u,d)=(0.96,0.02,0.02) fatal={'n': True, 'l': False, 'u': True, 'r': True, 'd': True} | r6:-- r7:Ec5R r8:Ec6L
+seed  22 step  926 ramp 9 mv_spd 1 mt 0 y=1 sampled n exec n p(n,u,d)=(0.93,0.02,0.06) fatal={'n': True, 'l': False, 'u': True, 'r': True, 'd': True} | r1:Ec6L r2:Ec4R r3:Gc0L
+seed  30 step 1056 ramp 9 mv_spd 1 mt 0 y=8 sampled n exec n p(n,u,d)=(0.96,0.02,0.02) fatal={'n': True, 'l': False, 'u': True, 'r': True, 'd': True} | r6:Ec6R r7:Ec5L r8:Ec6L
+
+--- claude sticky: showing 8 of 140 (rows y-2..y+2 at pre-step; player row y, col 5)
+seed   0 step 1019 ramp 9 mv_spd 1 mt 0 y=5 sampled u exec d p(n,u,d)=(0.00,1.00,0.00) fatal={'n': False, 'l': False, 'u': False, 'r': True, 'd': True} | r3:Ec1R r4:-- r5:Ec7L r6:Ec5R r7:Ec1L
+seed   1 step  332 ramp 3 mv_spd 4 mt 2 y=4 sampled n exec d p(n,u,d)=(1.00,0.00,0.00) fatal={'n': False, 'l': False, 'u': False, 'r': False, 'd': True} | r2:-- r3:Ec8L r4:-- r5:Ec5R r6:--
+seed   2 step  648 ramp 6 mv_spd 2 mt 0 y=4 sampled n exec d p(n,u,d)=(1.00,0.00,0.00) fatal={'n': False, 'l': False, 'u': False, 'r': False, 'd': True} | r2:-- r3:Ec7R r4:-- r5:Ec5R r6:Ec0L
+seed   3 step  624 ramp 6 mv_spd 2 mt 0 y=6 sampled n exec u p(n,u,d)=(1.00,0.00,0.00) fatal={'n': False, 'l': False, 'u': True, 'r': False, 'd': False} | r4:-- r5:Ec6L r6:-- r7:Ec8L r8:Ec8R
+seed   5 step  527 ramp 5 mv_spd 3 mt 0 y=4 sampled n exec d p(n,u,d)=(1.00,0.00,0.00) fatal={'n': False, 'l': False, 'u': False, 'r': False, 'd': True} | r2:Ec8R r3:Ec8L r4:-- r5:Ec4R r6:Gc6R
+seed   7 step  526 ramp 5 mv_spd 3 mt 1 y=3 sampled n exec d p(n,u,d)=(1.00,0.00,0.00) fatal={'n': False, 'l': False, 'u': False, 'r': True, 'd': True} | r1:-- r2:Ec7L r3:Ec6R r4:Ec5L r5:Ec1R
+seed   9 step  194 ramp 1 mv_spd 5 mt 2 y=7 sampled n exec u p(n,u,d)=(0.99,0.00,0.01) fatal={'n': False, 'l': False, 'u': True, 'r': True, 'd': False} | r5:Ec0R r6:Ec5L r7:Ec6R r8:--
+seed  10 step 1154 ramp 9 mv_spd 1 mt 0 y=6 sampled n exec u p(n,u,d)=(1.00,0.00,0.00) fatal={'n': False, 'l': False, 'u': True, 'r': False, 'd': False} | r4:Gc4L r5:Ec4R r6:Gc6L r7:-- r8:--
+
+--- claude sampled_fatal: showing 1 of 1 (rows y-2..y+2 at pre-step; player row y, col 5)
+seed 119 step   94 ramp 0 mv_spd 5 mt 2 y=8 sampled u exec u p(n,u,d)=(0.96,0.02,0.02) fatal={'n': False, 'l': False, 'u': True, 'r': True, 'd': False} | r6:Ec7R r7:Ec5R r8:Ec6L
+
+claude sticky deaths: n_alive entities at death: {7: 45, 4: 22, 5: 32, 6: 26, 3: 5, 8: 10}
+claude all deaths: n_alive: {3: 5, 4: 24, 5: 48, 6: 32, 7: 70, 8: 21}
+claude all deaths: player row: {1: 27, 2: 22, 3: 33, 4: 30, 5: 31, 6: 18, 7: 13, 8: 26}
+
+--- astra trapped: showing 6 of 31 (rows y-2..y+2 at pre-step; player row y, col 5)
+seed   2 step 1031 ramp 9 mv_spd 1 mt 0 y=8 sampled u exec u p(n,u,d)=(0.36,0.50,0.13) fatal={'n': True, 'l': True, 'u': True, 'r': False, 'd': True} | r6:Ec7R r7:Ec5R r8:Ec4R
+seed   7 step  941 ramp 9 mv_spd 1 mt 0 y=8 sampled n exec n p(n,u,d)=(0.75,0.00,0.25) fatal={'n': True, 'l': False, 'u': True, 'r': True, 'd': True} | r6:Ec5R r7:Ec4R r8:Ec6L
+seed   8 step  782 ramp 7 mv_spd 2 mt 0 y=1 sampled d exec d p(n,u,d)=(0.38,0.16,0.45) fatal={'n': True, 'l': False, 'u': True, 'r': True, 'd': True} | r1:Ec6L r2:Ec5R r3:Ec2R
+seed  18 step 1367 ramp 9 mv_spd 1 mt 0 y=1 sampled d exec d p(n,u,d)=(0.13,0.05,0.82) fatal={'n': True, 'l': True, 'u': True, 'r': False, 'd': True} | r1:Ec4R r2:Ec6L r3:Ec6R
+seed  37 step 1242 ramp 9 mv_spd 1 mt 0 y=1 sampled d exec u p(n,u,d)=(0.04,0.02,0.95) fatal={'n': True, 'l': True, 'u': True, 'r': False, 'd': True} | r1:Ec4R r2:Ec6L r3:Ec6R
+seed  42 step 1258 ramp 9 mv_spd 1 mt 0 y=4 sampled n exec n p(n,u,d)=(0.73,0.27,0.00) fatal={'n': True, 'l': False, 'u': True, 'r': True, 'd': True} | r2:Ec0L r3:Ec5R r4:Ec6L r5:Ec5L r6:Ec7L
+
+--- astra sticky: showing 8 of 67 (rows y-2..y+2 at pre-step; player row y, col 5)
+seed   3 step  629 ramp 6 mv_spd 2 mt 1 y=5 sampled n exec d p(n,u,d)=(1.00,0.00,0.00) fatal={'n': False, 'l': False, 'u': False, 'r': False, 'd': True} | r3:-- r4:Ec7L r5:Ec3L r6:Ec5L r7:Ec9R
+seed   5 step  515 ramp 5 mv_spd 3 mt 0 y=4 sampled n exec d p(n,u,d)=(0.70,0.30,0.00) fatal={'n': False, 'l': False, 'u': False, 'r': False, 'd': True} | r2:Ec2R r3:-- r4:-- r5:Ec4R r6:Ec9L
+seed   6 step 1449 ramp 9 mv_spd 1 mt 0 y=5 sampled d exec u p(n,u,d)=(0.00,0.00,1.00) fatal={'n': False, 'l': False, 'u': True, 'r': False, 'd': False} | r3:Ec2R r4:Ec6L r5:Ec9R r6:Gc8L r7:--
+seed  11 step  386 ramp 3 mv_spd 4 mt 0 y=4 sampled d exec u p(n,u,d)=(0.75,0.00,0.25) fatal={'n': False, 'l': False, 'u': True, 'r': False, 'd': False} | r2:Gc2R r3:Ec5R r4:Ec0L r5:Ec9L r6:--
+seed  13 step  810 ramp 7 mv_spd 2 mt 0 y=7 sampled n exec u p(n,u,d)=(1.00,0.00,0.00) fatal={'n': False, 'l': False, 'u': True, 'r': False, 'd': False} | r5:Ec2L r6:Ec5R r7:Gc1R r8:Ec7L
+seed  15 step 1320 ramp 9 mv_spd 1 mt 0 y=2 sampled n exec u p(n,u,d)=(1.00,0.00,0.00) fatal={'n': False, 'l': False, 'u': True, 'r': False, 'd': True} | r1:Ec5L r2:Ec8R r3:Ec5R r4:Ec6R
+seed  17 step  959 ramp 9 mv_spd 1 mt 0 y=5 sampled d exec u p(n,u,d)=(0.00,0.00,1.00) fatal={'n': False, 'l': False, 'u': True, 'r': False, 'd': False} | r3:Ec1L r4:Ec5R r5:-- r6:Gc3R r7:Gc8L
+seed  22 step  935 ramp 9 mv_spd 1 mt 0 y=1 sampled d exec n p(n,u,d)=(0.00,0.00,1.00) fatal={'n': True, 'l': False, 'u': True, 'r': True, 'd': False} | r1:Ec6L r2:Ec6R r3:Ec4L
+
+--- astra sampled_fatal: showing 10 of 102 (rows y-2..y+2 at pre-step; player row y, col 5)
+seed   0 step  931 ramp 9 mv_spd 1 mt 0 y=1 sampled d exec d p(n,u,d)=(0.05,0.02,0.93) fatal={'n': False, 'l': True, 'u': False, 'r': False, 'd': True} | r1:Ec3R r2:Ec5L r3:Ec2L
+seed   1 step 1035 ramp 9 mv_spd 1 mt 0 y=8 sampled u exec u p(n,u,d)=(0.23,0.70,0.07) fatal={'n': False, 'l': False, 'u': True, 'r': True, 'd': False} | r6:Ec4L r7:Ec5L r8:Ec7L
+seed   4 step 1040 ramp 9 mv_spd 1 mt 0 y=1 sampled d exec d p(n,u,d)=(0.14,0.05,0.81) fatal={'n': False, 'l': False, 'u': False, 'r': True, 'd': True} | r1:Ec7L r2:Ec5R r3:Ec1L
+seed   9 step  929 ramp 9 mv_spd 1 mt 0 y=1 sampled d exec d p(n,u,d)=(0.00,0.00,1.00) fatal={'n': False, 'l': False, 'u': False, 'r': True, 'd': True} | r1:Ec7L r2:Ec4R r3:Gc3R
+seed  10 step 1161 ramp 9 mv_spd 1 mt 0 y=1 sampled d exec d p(n,u,d)=(0.26,0.08,0.66) fatal={'n': False, 'l': True, 'u': False, 'r': False, 'd': True} | r1:Ec3R r2:Ec4R r3:Ec4L
+seed  12 step  352 ramp 3 mv_spd 4 mt 2 y=8 sampled u exec u p(n,u,d)=(0.21,0.72,0.07) fatal={'n': False, 'l': False, 'u': True, 'r': False, 'd': False} | r6:Ec8R r7:Ec5L r8:Ec3R
+seed  14 step  934 ramp 9 mv_spd 1 mt 0 y=8 sampled u exec u p(n,u,d)=(0.23,0.70,0.07) fatal={'n': False, 'l': True, 'u': True, 'r': False, 'd': False} | r6:Ec6R r7:Ec5R r8:Ec3R
+seed  16 step  982 ramp 9 mv_spd 1 mt 0 y=8 sampled u exec u p(n,u,d)=(0.01,0.98,0.00) fatal={'n': False, 'l': True, 'u': True, 'r': False, 'd': False} | r6:Ec6R r7:Ec5L r8:Ec3R
+seed  19 step 1098 ramp 9 mv_spd 1 mt 0 y=1 sampled d exec d p(n,u,d)=(0.28,0.09,0.63) fatal={'n': False, 'l': True, 'u': False, 'r': False, 'd': True} | r1:Ec3R r2:Ec4R r3:Ec3L
+seed  20 step  943 ramp 9 mv_spd 1 mt 0 y=8 sampled u exec u p(n,u,d)=(0.01,0.98,0.00) fatal={'n': False, 'l': True, 'u': True, 'r': False, 'd': False} | r6:Ec0L r7:Ec5R r8:Ec3R
+
+astra sticky deaths: n_alive entities at death: {5: 15, 3: 6, 6: 6, 8: 5, 7: 22, 4: 11, 2: 2}
+astra all deaths: n_alive: {2: 3, 3: 8, 4: 19, 5: 31, 6: 11, 7: 83, 8: 45}
+astra all deaths: player row: {1: 76, 2: 11, 3: 16, 4: 13, 5: 16, 6: 6, 7: 6, 8: 56}

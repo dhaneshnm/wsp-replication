@@ -1,0 +1,6 @@
+game         zero  PPO100M  PPO500M   Astra  Claude
+breakout      0.5     15.8     25.3   517.4  claude-opus-5-5: best 449.7, median 261.5, all [30.0, 261.5, 449.7] (n=3)
+seaquest      0.1      5.6     88.9    53.1  claude-opus-5-5: best 51.7, median 7.5, all [7.4, 7.5, 51.7] (n=3, 1 cut off, excluded)
+asterix       0.5     25.8     55.2    53.2  claude-opus-5-5: best 45.6, median 33.0, all [23.4, 33.0, 45.6] (n=3)
+
+PPO and Astra: published 1,000-episode means (best seed). Zero and Claude: measured here.

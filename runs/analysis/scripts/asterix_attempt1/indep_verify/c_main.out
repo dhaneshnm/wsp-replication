@@ -1,0 +1,3 @@
+claude01 episodes 200 mean score 31.49 se 1.6415458763987099 mean length 833.86 all ended by death: True collision-model mismatches: 0
+claude00 episodes 200 mean score 65.63 se 3.5419475521683768 mean length 1177.72 all ended by death: True collision-model mismatches: 0
+astra01 episodes 200 mean score 57.74 se 2.3969645796256356 mean length 904.045 all ended by death: True collision-model mismatches: 0

@@ -1,0 +1,2 @@
+attempt1 left/right masked (b3[1]=b3[3]=-100), seeds 0-199: mean 2.36 se 0.24 mean_len 176.6
+attempt2 left/right masked (b3[1]=b3[3]=-100), seeds 0-199: mean 3.98 se 0.31 mean_len 299.2

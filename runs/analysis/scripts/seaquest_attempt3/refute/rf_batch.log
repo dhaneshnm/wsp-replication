@@ -1,0 +1,7 @@
+claude N 200 mean 49.84 se 2.93
+claude_pe N 200 mean 49.84 se 2.93
+astra N 200 mean 53.71 se 2.99
+astra_pe N 200 mean 53.71 se 2.99
+claude_sticky0 N 200 mean 113.26 se 3.66
+astra_sticky0 N 200 mean 106.46 se 2.98
+claude_guard2 N 200 mean 73.18 se 3.11

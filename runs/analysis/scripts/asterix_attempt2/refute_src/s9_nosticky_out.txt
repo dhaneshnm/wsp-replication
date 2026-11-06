@@ -1,0 +1,2 @@
+claude_nosticky          n=200 mean  92.84 se  4.33 mean_len  1291.4 max 449
+astra_nosticky           n=200 mean  70.92 se  2.41 mean_len  1030.1 max 198

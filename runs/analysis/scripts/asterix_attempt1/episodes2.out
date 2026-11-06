@@ -1,0 +1,24 @@
+claude_s01 sticky=0.1: mean score 31.49 (se 1.64) mean len 833.9
+  gold spawned 13973, collected 6298, capture rate 0.451; collected while staying 5309, while moving 989
+  steps where previous action would be fatal if repeated: 0.0072 of all steps
+  ... given previous action was up/down: 897/13568 = 0.0661
+  ... given previous action was noop/other: 308/153204 = 0.0020
+  expected sticky deaths per episode at p=0.1: 0.603
+claude_s0 sticky=0.0: mean score 65.63 (se 3.54) mean len 1177.7
+  gold spawned 28961, collected 13126, capture rate 0.453; collected while staying 10851, while moving 2275
+  steps where previous action would be fatal if repeated: 0.0106 of all steps
+  ... given previous action was up/down: 1843/23972 = 0.0769
+  ... given previous action was noop/other: 656/211572 = 0.0031
+  expected sticky deaths per episode at p=0.1: 1.250
+astra_s01 sticky=0.1: mean score 57.74 (se 2.40) mean len 904.0
+  gold spawned 16974, collected 11548, capture rate 0.680; collected while staying 9300, while moving 2248
+  steps where previous action would be fatal if repeated: 0.0044 of all steps
+  ... given previous action was up/down: 562/56812 = 0.0099
+  ... given previous action was noop/other: 242/123997 = 0.0020
+  expected sticky deaths per episode at p=0.1: 0.402
+astra_s0 sticky=0.0: mean score 70.92 (se 2.41) mean len 1030.1
+  gold spawned 20893, collected 14184, capture rate 0.679; collected while staying 11667, while moving 2517
+  steps where previous action would be fatal if repeated: 0.0017 of all steps
+  ... given previous action was up/down: 82/63372 = 0.0013
+  ... given previous action was noop/other: 263/142644 = 0.0018
+  expected sticky deaths per episode at p=0.1: 0.172

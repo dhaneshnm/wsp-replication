@@ -1,0 +1,9 @@
+real states checked: 14153 (seeds 0..19)
+max |D_r(net) - tanh(0.6*S_table - 1.2)| = 3.51e-08
+max |G_r(net) - tanh(G_table - 1)|      = 2.78e-08
+  all_vertical_fatal: 3
+  move_frame: 5242
+  non_move_frame: 8911
+  p_mass_on_fatal_when_safe_exists: 0.07183562964200974
+  safe_exists: 14150
+  states: 14153

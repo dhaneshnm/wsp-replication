@@ -1,0 +1,2 @@
+{'trapped': 59, 'own action survives (should be 0)': 0, 'sideways survives 1 step': 59, 'sideways + 1 more step survives': 59, 'sideways + 3 more steps survives': 59}
+trapped deaths by row: {1: 23, 3: 3, 4: 3, 5: 5, 7: 2, 8: 23}  edge rows (1,8): 46

@@ -1,0 +1,33 @@
+claude: empty board, player r5: p(noop,up,down)=(0.9647,0.0177,0.0177)
+claude: enemy at r3 c5 (2 rows up):      p(up)=1.767e-02  p(noop)=0.9647 p(down)=0.0177
+claude: enemy at r3 c4 moving right:     p(up)=1.767e-02
+claude: enemy at r7 c5 (2 rows down):    p(down)=1.767e-02
+   claude player r3: max |dp(up)| over any single enemy in r-2 = 2.802e-05; max |dp(down)| over any enemy in r+2 = 2.648e-07  (empty p(up)=0.0177, p(down)=0.0177)
+   claude player r4: max |dp(up)| over any single enemy in r-2 = 0.000e+00; max |dp(down)| over any enemy in r+2 = 2.648e-07  (empty p(up)=0.0177, p(down)=0.0177)
+   claude player r5: max |dp(up)| over any single enemy in r-2 = 2.648e-07; max |dp(down)| over any enemy in r+2 = 2.648e-07  (empty p(up)=0.0177, p(down)=0.0177)
+   claude player r6: max |dp(up)| over any single enemy in r-2 = 4.763e-09; max |dp(down)| over any enemy in r+2 = 2.802e-05  (empty p(up)=0.0177, p(down)=0.0177)
+astra: empty board, player r5: p(noop,up,down)=(0.5583,0.2379,0.2039)
+astra: enemy at r3 c5 (2 rows up):      p(up)=1.842e-49  p(noop)=0.7325 p(down)=0.2675
+astra: enemy at r3 c4 moving right:     p(up)=1.842e-49
+astra: enemy at r7 c5 (2 rows down):    p(down)=1.511e-49
+   astra player r3: max |dp(up)| over any single enemy in r-2 = 2.379e-01; max |dp(down)| over any enemy in r+2 = 2.039e-01  (empty p(up)=0.2379, p(down)=0.2039)
+   astra player r4: max |dp(up)| over any single enemy in r-2 = 2.379e-01; max |dp(down)| over any enemy in r+2 = 2.039e-01  (empty p(up)=0.2379, p(down)=0.2039)
+   astra player r5: max |dp(up)| over any single enemy in r-2 = 2.379e-01; max |dp(down)| over any enemy in r+2 = 2.039e-01  (empty p(up)=0.2379, p(down)=0.2039)
+   astra player r6: max |dp(up)| over any single enemy in r-2 = 2.379e-01; max |dp(down)| over any enemy in r+2 = 2.039e-01  (empty p(up)=0.2379, p(down)=0.2039)
+Claude structural: D-unit (row) inputs to each (player row r, action) layer-2 unit:
+   r=1 up  : D rows [1], G rows [1]
+   r=1 down: D rows [2], G rows [2]
+   r=2 up  : D rows [1], G rows [1]
+   r=2 down: D rows [3], G rows [3]
+   r=3 up  : D rows [2], G rows [2]
+   r=3 down: D rows [4], G rows [4]
+   r=4 up  : D rows [3], G rows [3]
+   r=4 down: D rows [5], G rows [5]
+   r=5 up  : D rows [4], G rows [4]
+   r=5 down: D rows [6], G rows [6]
+   r=6 up  : D rows [5], G rows [5]
+   r=6 down: D rows [7], G rows [7]
+   r=7 up  : D rows [6], G rows [6]
+   r=7 down: D rows [8], G rows [8]
+   r=8 up  : D rows [7], G rows [7]
+   r=8 down: D rows [8], G rows [8]

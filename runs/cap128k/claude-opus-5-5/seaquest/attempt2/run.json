@@ -1,0 +1,42 @@
+{
+ "model": "claude-opus-5-5",
+ "effort": "high",
+ "game": "seaquest",
+ "attempt": 2,
+ "max_tokens": 128000,
+ "wall_seconds": 845.289822101593,
+ "usage": {
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 0,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 0,
+  "inference_geo": "global",
+  "input_tokens": 6822,
+  "output_tokens": 79376,
+  "output_tokens_details": {
+   "thinking_tokens": 73612
+  },
+  "server_tool_use": null,
+  "service_tier": "standard",
+  "speed": "standard",
+  "stop_reason": "end_turn"
+ },
+ "stop_reason": "end_turn",
+ "valid_attempt": true,
+ "parse": {
+  "statements": 204,
+  "applied": 204,
+  "errors": []
+ },
+ "nonzero_weights": 1280,
+ "score": {
+  "mean": 7.451,
+  "se": 0.23807620477334412,
+  "episodes": 1000,
+  "max": 52.0,
+  "mean_length": 278.936
+ },
+ "tools_available": false
+}
